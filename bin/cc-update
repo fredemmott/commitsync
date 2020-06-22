@@ -1,0 +1,52 @@
+#!/bin/sh
+#!/bin/sh
+# Copyright (c) 2020-present, Fred Emmott <fred@fredemmott.com>
+# All rights reserved.
+#
+# This source code is licensed under the ISC license found in the LICENSE file
+# in the root directory of this source tree.
+#
+# ---
+#
+# Store the current commit and metadata in the local commitcloud repository.
+set -e
+
+CC_BIN="$(dirname "$(realpath "$0")")"
+
+function ccgit() {
+  "$CC_BIN/cc-git" "$@"
+}
+
+# Add a file to the index without a checkout
+# - Takes content on STDIN
+# - Takes filename as $1
+function ccstagefile() {
+  ccgit update-index --add \
+    --cacheinfo "100644,$(git hash-object -w --stdin),$1"
+}
+
+# Where we're going to save this commit
+REF="refs/heads/$($CC_BIN/cc-get-branch-name)"
+# Where we're going to save metadata
+META_REF="${REF/heads\/cc-/heads/ccmeta-}"
+
+if "${CC_DEBUG:-false}"; then
+  echo "ref\t$REF" >&2
+  echo "meta\t$META_REF" >&2
+fi
+
+# Create the metadata first, in case something goes wrong
+# Set the current branch, without a checkout
+ccgit symbolic-ref HEAD ${META_REF}
+REMOTE=$("$CC_BIN/cc-get-upstream")
+hostname | ccstagefile hostname
+whoami | ccstagefile user
+date -R | ccstagefile datetime
+echo $REMOTE | ccstagefile upstream.ref
+git config remote.$(echo $REMOTE | cut -f3 -d/).url | ccstagefile upstream.url
+git rev-parse HEAD | ccstagefile HEAD
+META_COMMIT=$(ccgit commit-tree -m "Metadata for $REF" $(ccgit write-tree))
+
+# Update branches
+ccgit update-ref $META_REF $META_COMMIT
+ccgit update-ref $REF $(git rev-parse HEAD)

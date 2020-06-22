@@ -1,0 +1,55 @@
+#!/bin/sh
+# Copyright (c) 2020-present, Fred Emmott <fred@fredemmott.com>
+# All rights reserved.
+#
+# This source code is licensed under the ISC license found in the LICENSE file
+# in the root directory of this source tree.
+#
+# ---
+#
+# Get the branch name to use for the current commit.
+# - will re-use a branch associated with HEAD or HEAD^
+# - will create a new branch name if neither has a cc-branch
+set -e
+
+CC_BIN="$(dirname "$(realpath "$0")")"
+
+function ccgit() {
+  "$CC_BIN/cc-git" "$@"
+}
+
+# Does the current commit have a CC branch?
+# For example, manually triggered re-sync with
+# no new commit
+REF=$(
+  ccgit for-each-ref \
+    --points-at $(git rev-parse HEAD) \
+    --format '%(refname)' \
+    "refs/heads/cc-*"
+)
+if [ -n "$REF" ]; then
+  if "${CC_DEBUG:-false}"; then
+    echo "HEAD\t$REF" >&2
+  fi
+  echo "${REF##*/}"
+  exit 0
+fi
+
+# Nope, does the parent commit have one?
+# For example, adding a new commit
+REF=$(ccgit for-each-ref \
+  --points-at $(git rev-parse HEAD^) \
+  --format '%(refname)' \
+  "refs/heads/cc-*"
+)
+
+if [ -n "$REF" ]; then
+  if "${CC_DEBUG:-false}"; then
+    echo "HEAD^\t$REF" >&2
+  fi
+  echo "${REF##*/}"
+  exit 0
+fi
+
+# Nope; rebase, amend, etc. Need a new head
+exec "$CC_BIN/cc-create-branch-name"

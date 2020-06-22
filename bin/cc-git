@@ -1,0 +1,23 @@
+#!/bin/sh
+# Copyright (c) 2020-present, Fred Emmott <fred@fredemmott.com>
+# All rights reserved.
+#
+# This source code is licensed under the ISC license found in the LICENSE file
+# in the root directory of this source tree.
+#
+# ---
+#
+# Invoke `git` for the commit-cloud repository.
+set -e
+
+REAL_GIT_DIR=$(git rev-parse --absolute-git-dir)
+export GIT_DIR="${REAL_GIT_DIR}/cc"
+export GIT_INDEX_FILE="${GIT_DIR}/index"
+# Allow referencing objects by SHA from the 'real' repository,
+# without copying them
+export GIT_ALTERNATE_OBJECT_DIRECTORIES="${REAL_GIT_DIR}/objects"
+
+if "${CC_DEBUG:-false}"; then
+  echo "cc-git\t$@" >&2
+fi
+exec git "$@"

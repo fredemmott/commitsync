@@ -1,0 +1,30 @@
+#!/bin/sh
+# Copyright (c) 2020-present, Fred Emmott <fred@fredemmott.com>
+# All rights reserved.
+#
+# This source code is licensed under the ISC license found in the LICENSE file
+# in the root directory of this source tree.
+#
+# ---
+#
+# Generate a branch name that is:
+# - unique for the HEAD
+# - easily GC'able
+# - easily searchable/sortable by date and remote branch without looking at
+#    metadata
+set -e
+
+CC_BIN="$(dirname "$(realpath "$0")")"
+REMOTE_REF="$("$CC_BIN/cc-get-upstream")"
+REMOTE_BRANCH="${REMOTE_REF##*/}"
+REMOTE_SHORTHASH=$(git rev-parse --short "$REMOTE_REF")
+
+HEAD_DATA=$(git log -1 --pretty=format:%cs/%h HEAD)
+HEAD_SHORTHASH=${HEAD_DATA##*/}
+HEAD_DATE=${HEAD_DATA%%/*}
+
+REF="cc-${HEAD_DATE}-${REMOTE_BRANCH}-${HEAD_SHORTHASH}"
+if "${CC_DEBUG:-false}"; then
+  echo "NEW\t$REF" >&2
+fi
+echo $REF
