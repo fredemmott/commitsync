@@ -27,13 +27,10 @@ case "$MODE" in
 "fetch")
   exec "$CC_BIN/cc-git" fetch commitcloud
   ;;
-"git")
-  exec "$CC_BIN/cc-git" "$@"
-  ;;
 "init")
   exec "$CC_BIN/cc-init" "$@"
   ;;
 esac
 
-echo "Usage: $0 [fetch|git|init|list]" >&2
+echo "Usage: $0 [fetch|init|list]" >&2
 exit 1
