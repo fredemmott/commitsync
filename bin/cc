@@ -22,13 +22,13 @@ CC_BIN="$(dirname "$(realpath "$0")")"
 
 case "$MODE" in
 "list")
-  exec "$CC_BIN/cc-list" "$@"
+  exec "$CC_BIN/cc-list"
   ;;
 "fetch")
   exec "$CC_BIN/cc-git" fetch commitcloud
   ;;
 "init")
-  exec "$CC_BIN/cc-init" "$@"
+  exec "$CC_BIN/cc-init"
   ;;
 esac
 
