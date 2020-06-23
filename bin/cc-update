@@ -25,6 +25,12 @@ function ccstagefile() {
     --cacheinfo "100644,$(git hash-object -w --stdin),$1"
 }
 
+# Make sure we don't attempt to move a branch that another computer has
+# already moved
+#
+# Ignore failures in case we're offline
+ccgit fetch 2>/dev/null || true
+
 # Where we're going to save this commit
 REF="refs/heads/$($CC_BIN/cc-get-branch-name)"
 # Where we're going to save metadata
@@ -71,3 +77,6 @@ fi
 # Update branches
 ccgit update-ref $META_REF $META_COMMIT
 ccgit update-ref $REF $(git rev-parse HEAD)
+echo "Starting CommitCloud push..."
+ccgit push commitcloud ${REF} ${META_REF} >/dev/null 2>/dev/null &
+disown $!
