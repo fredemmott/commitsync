@@ -45,7 +45,28 @@ date -R | ccstagefile datetime
 echo $REMOTE | ccstagefile upstream.ref
 git config remote.$(echo $REMOTE | cut -f3 -d/).url | ccstagefile upstream.url
 git rev-parse HEAD | ccstagefile HEAD
-META_COMMIT=$(ccgit commit-tree -m "Metadata for $REF" $(ccgit write-tree))
+META_PARENT=$(ccgit show-ref --hash ${META_REF} || true)
+echo "FOO $META_PARENT"
+if [ -z "$META_PARENT" ]; then
+  if "${CC_DEBUG:-false}"; then
+    echo "meta\tOrphan commit" >&2
+  fi
+  META_COMMIT=$(
+    ccgit commit-tree \
+      -m "Metadata for $REF" \
+      $(ccgit write-tree)
+  )
+else
+  if "${CC_DEBUG:-false}"; then
+    echo "meta\tChild commit" >&2
+  fi
+  META_COMMIT=$(
+    ccgit commit-tree \
+      -m "Metadata for $REF" \
+      -p "$META_PARENT" \
+      $(ccgit write-tree)
+  )
+fi
 
 # Update branches
 ccgit update-ref $META_REF $META_COMMIT
