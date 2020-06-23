@@ -6,10 +6,14 @@
  * in the root directory of this source tree.
  */
 
-mod dirs;
-mod get_upstream;
-mod exec;
+pub mod commit;
+pub mod dirs;
+pub mod exec;
+pub mod get_upstream;
 
+pub use commit::*;
+pub use dirs::*;
 pub use exec::*;
 pub use get_upstream::*;
-pub use dirs::*;
+
+pub mod raw_commit;
