@@ -50,7 +50,8 @@ whoami | ccstagefile user
 date -R | ccstagefile datetime
 echo $REMOTE | ccstagefile upstream.ref
 git config remote.$(echo $REMOTE | cut -f3 -d/).url | ccstagefile upstream.url
-git rev-parse HEAD | ccstagefile HEAD
+git rev-parse HEAD | ccstagefile commit.sha
+git symbolic-ref HEAD | ccstagefile commit.ref
 META_PARENT=$(ccgit show-ref --hash ${META_REF} || true)
 if [ -z "$META_PARENT" ]; then
   if "${CC_DEBUG:-false}"; then
