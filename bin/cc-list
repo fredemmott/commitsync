@@ -28,6 +28,10 @@ tReset=$(tput sgr0)
 tCols=$(tput cols)
 
 echo $REFS | while read ID REF; do
+  if [ -z "$REF" ]; then
+    echo "  $(tput setaf 1)No commits yet$(tput sgr0) - $(tput bold)Welcome to CommitCloud!$(tput sgr0)"
+    exit 1
+  fi
   COMMIT=$(ccgit cat-file blob ${REF}:commit.sha)
   RHS=$(
     printf "%*s" $tCols \
