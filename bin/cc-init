@@ -1,0 +1,75 @@
+#!/bin/sh
+# Copyright (c) 2020-present, Fred Emmott <fred@fredemmott.com>
+# All rights reserved.
+#
+# This source code is licensed under the ISC license found in the LICENSE file
+# in the root directory of this source tree.
+#
+# ---
+#
+# Initialize CommitCloud for the current repository
+set -e
+
+CC_BIN="$(realpath "$(dirname "$(realpath "$0")")")"
+
+REAL_GIT_DIR=$(git rev-parse --absolute-git-dir)
+CC_GIT_DIR="${REAL_GIT_DIR}/cc"
+
+if [ -e "${CC_GIT_DIR}" ]; then
+  echo "CommitCloud already initialized. To reset, delete"
+  echo "  $CC_GIT_DIR"
+  exit 1
+fi
+
+echo "Creating local repo..."
+mkdir $CC_GIT_DIR
+git init --bare "${CC_GIT_DIR}"
+echo "This is a CommitCloud local repo." > "${CC_GIT_DIR}/README"
+
+echo "Adding alias..."
+git config alias.cc "!${CC_BIN}/cc"
+
+function ccgit() {
+  "${CC_BIN}/cc-git" "$@"
+}
+
+cat <<EOF
+Where should CommitCloud push?
+
+All branches will be public; you probably don't want this to be your
+main upstream repository.
+
+Example: git@example.com:commitcloud/myrepo.git
+EOF
+
+printf "Remote URL: "
+read REMOTE_URL
+
+if [ -z "$REMOTE_URL" ]; then
+  echo "No URL specified; not setting up syncing."
+  exit 0
+fi
+
+echo "Fetching remote commitcloud data..."
+ccgit remote add commitcloud "${REMOTE_URL}"
+ccgit fetch commitcloud >/dev/null 2>/dev/null
+
+NEED_HOOK=true
+if [ ! -e "${REAL_GIT_DIR}/hooks/post-commit" ]; then
+  echo "Setting up commit hook..."
+  NEED_HOOK=false
+  ln -s "${CC_BIN}/cc-update" "${REAL_GIT_DIR}/hooks/post-commit"
+fi
+
+cat <<EOF
+Done! Commits will automatically be pushed to CommitCloud.
+
+Run:
+- 'git cc' to checkout a commitcloud branch
+- 'git cc sync' to manually fetch and push
+EOF
+if $NEED_HOOK; then
+  cat <<EOF
+TO COMPLETE SETUP: modify your post-commit hook to call ${CC_BIN}/cc-update
+EOF
+fi

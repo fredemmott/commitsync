@@ -1,0 +1,33 @@
+#!/bin/sh
+# Copyright (c) 2020-present, Fred Emmott <fred@fredemmott.com>
+# All rights reserved.
+#
+# This source code is licensed under the ISC license found in the LICENSE file
+# in the root directory of this source tree.
+#
+# ---
+#
+# The most common user entry point; defaults to "pick a branch"
+
+set -e
+
+if [ -n "$1" ]; then
+  MODE="$1"
+  shift
+else
+  MODE="checkout"
+fi
+
+CC_BIN="$(dirname "$(realpath "$0")")"
+
+case "$MODE" in
+"init")
+  exec "$CC_BIN/cc-init" "$@"
+  ;;
+"git")
+  exec "$CC_BIN/cc-git" "$@"
+  ;;
+esac
+
+echo "Usage: $0 init|git" >&2
+exit 1

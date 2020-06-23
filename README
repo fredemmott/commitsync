@@ -1,9 +1,11 @@
 # CommitCloud for Git
 
-## Preparation
+## Usage
 
-1. Create a new repo for commitcloud: `mkdir .git/cc; (cd .git/cc; git init --bare)`
-2. Add hook:
-  `ln -s /path/to/this/repo/bin/cc-update .git/hooks/post-commit`
-3. Optional: Add `git ccgit` alias for debugging:
-   `git config --global alias.ccgit "\!/path/to/this/repo/bin/cc-git"
+1. Create a repository to sync to; while it's possible to sync to your main
+  repository, this isn't usually a good idea: CommitCloud will create a lot
+  of branches, which are largely noise - and they'll automatically be public.
+  It's usually best to create a private repository somewhere.
+2. Configure passwordless access to this repository - for example, via ssh-agent.
+4. Run `bin/cc-init` from inside your working directory
+5. NOT IMPLEMENTED: Run `git cc` to switch commits
