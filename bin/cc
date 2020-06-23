@@ -15,19 +15,25 @@ if [ -n "$1" ]; then
   MODE="$1"
   shift
 else
-  MODE="checkout"
+  MODE="list"
 fi
 
 CC_BIN="$(dirname "$(realpath "$0")")"
 
 case "$MODE" in
-"init")
-  exec "$CC_BIN/cc-init" "$@"
+"list")
+  exec "$CC_BIN/cc-list" "$@"
+  ;;
+"fetch")
+  exec "$CC_BIN/cc-git" fetch commitcloud
   ;;
 "git")
   exec "$CC_BIN/cc-git" "$@"
   ;;
+"init")
+  exec "$CC_BIN/cc-init" "$@"
+  ;;
 esac
 
-echo "Usage: $0 init|git" >&2
+echo "Usage: $0 [fetch|git|init|list]" >&2
 exit 1
