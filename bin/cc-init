@@ -22,9 +22,11 @@ if [ -e "${CC_GIT_DIR}" ]; then
 fi
 
 echo "Creating local repo..."
-mkdir $CC_GIT_DIR
+mkdir "$CC_GIT_DIR"
 git init --bare "${CC_GIT_DIR}"
 echo "This is a CommitCloud local repo." > "${CC_GIT_DIR}/README"
+echo "${REAL_GIT_DIR}/objects" > "${CC_GIT_DIR}/objects/info/alternates"
+echo "${CC_GIT_DIR}/objects" >> "${REAL_GIT_DIR}/objects/info/alternates"
 
 echo "Adding alias..."
 git config alias.cc "!${CC_BIN}/cc"
@@ -70,6 +72,13 @@ Run:
 EOF
 if $NEED_HOOK; then
   cat <<EOF
-TO COMPLETE SETUP: modify your post-commit hook to call ${CC_BIN}/cc-update
+=================
+TO COMPLETE SETUP
+=================
+
+Modify your post-commit hook to call:
+  ${CC_BIN}/cc-update
+
+=================
 EOF
 fi
