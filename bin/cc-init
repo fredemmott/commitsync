@@ -72,6 +72,7 @@ Run:
 EOF
 if $NEED_HOOK; then
   cat <<EOF
+
 =================
 TO COMPLETE SETUP
 =================
@@ -79,6 +80,5 @@ TO COMPLETE SETUP
 Modify your post-commit hook to call:
   ${CC_BIN}/cc-update
 
-=================
 EOF
 fi
