@@ -73,9 +73,8 @@ else
   )
 fi
 
-# Update branches
 ccgit update-ref $META_REF $META_COMMIT
 ccgit update-ref $REF $(git rev-parse HEAD)
-echo "Starting CommitCloud push..."
+
 ccgit push commitcloud ${REF} ${META_REF} >/dev/null 2>/dev/null &
 disown $!
