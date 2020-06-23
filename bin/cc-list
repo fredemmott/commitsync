@@ -15,8 +15,8 @@ function ccgit() {
   "$CC_BIN/cc-git" "$@"
 }
 
-echo "Fetching from CommitCloud..."
-#ccgit fetch commitcloud >/dev/null 2>/dev/null
+echo "Fetching..."
+ccgit fetch commitcloud >/dev/null || true
 REFS=$(ccgit for-each-ref --format '%(refname)' 'refs/remotes/commitcloud/ccmeta-*' | nl)
 
 tBold=$(tput bold)
