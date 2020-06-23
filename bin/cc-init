@@ -44,7 +44,7 @@ main upstream repository.
 Example: git@example.com:commitcloud/myrepo.git
 EOF
 
-printf "Remote URL: "
+printf "$(tput bold)Remote URL: $(tput sgr0)"
 read REMOTE_URL
 
 if [ -z "$REMOTE_URL" ]; then
@@ -52,6 +52,7 @@ if [ -z "$REMOTE_URL" ]; then
   exit 0
 fi
 
+echo
 echo "Fetching remote commitcloud data..."
 ccgit remote add commitcloud "${REMOTE_URL}"
 ccgit fetch commitcloud >/dev/null 2>/dev/null
@@ -73,9 +74,10 @@ EOF
 if $NEED_HOOK; then
   cat <<EOF
 
+$(tput bold)
 =================
 TO COMPLETE SETUP
-=================
+=================$(tput sgr0)
 
 Modify your post-commit hook to call:
   ${CC_BIN}/cc-update
