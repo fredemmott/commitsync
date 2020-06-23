@@ -23,7 +23,7 @@ HEAD_DATA=$(git log -1 --pretty=format:%cs/%h HEAD)
 HEAD_SHORTHASH=${HEAD_DATA##*/}
 HEAD_DATE=${HEAD_DATA%%/*}
 
-REF="cc-${HEAD_DATE}-${REMOTE_BRANCH}-${HEAD_SHORTHASH}"
+REF="cc-${HEAD_DATE}-${REMOTE_BRANCH}-${REMOTE_SHORTHASH}-${HEAD_SHORTHASH}"
 if "${CC_DEBUG:-false}"; then
   echo "NEW\t$REF" >&2
 fi
