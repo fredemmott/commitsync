@@ -18,6 +18,13 @@ function ccgit() {
   "$CC_BIN/cc-git" "$@"
 }
 
+function cc_is_same_branch() {
+  REF=$1
+  META_BRANCH=refs/heads/ccmeta-${REF##refs/heads/cc-}
+  OLD_REF="$(ccgit cat-file blob $META_BRANCH:commit.ref)"
+  [ "$OLD_REF" == "$(git symbolic-ref HEAD)" ]
+}
+
 # Does the current commit have a CC branch?
 # For example, manually triggered re-sync with
 # no new commit
@@ -27,7 +34,7 @@ REF=$(
     --format '%(refname)' \
     "refs/heads/cc-*"
 )
-if [ -n "$REF" ]; then
+if [ -n "$REF" ] && cc_is_same_branch "$REF"; then
   if "${CC_DEBUG:-false}"; then
     echo "HEAD\t$REF" >&2
   fi
@@ -43,7 +50,7 @@ REF=$(ccgit for-each-ref \
   "refs/heads/cc-*"
 )
 
-if [ -n "$REF" ]; then
+if [ -n "$REF" ] && cc_is_same_branch "$REF"; then
   if "${CC_DEBUG:-false}"; then
     echo "HEAD^\t$REF" >&2
   fi
