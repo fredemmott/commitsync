@@ -1,5 +1,4 @@
 #!/bin/sh
-#!/bin/sh
 # Copyright (c) 2020-present, Fred Emmott <fred@fredemmott.com>
 # All rights reserved.
 #
@@ -47,8 +46,8 @@ ccgit symbolic-ref HEAD ${META_REF}
 REMOTE=$("$CC_BIN/cc-get-upstream")
 hostname | ccstagefile hostname
 whoami | ccstagefile user
-date -R | ccstagefile datetime
 echo $REMOTE | ccstagefile upstream.ref
+git rev-parse $REMOTE | ccstagefile upstream.sha
 git config remote.$(echo $REMOTE | cut -f3 -d/).url | ccstagefile upstream.url
 git rev-parse HEAD | ccstagefile commit.sha
 git symbolic-ref HEAD | ccstagefile commit.ref
