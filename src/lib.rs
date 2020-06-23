@@ -6,5 +6,5 @@
  * in the root directory of this source tree.
  */
 
-pub mod git;
 pub mod branch_names;
+pub mod git;

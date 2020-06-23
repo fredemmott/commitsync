@@ -6,8 +6,8 @@
  * in the root directory of this source tree.
  */
 
-use crate::git::raw_commit::*;
 use crate::git::git;
+use crate::git::raw_commit::*;
 use chrono::prelude::*;
 
 #[derive(Debug)]
