@@ -35,7 +35,7 @@ pub fn main() -> () {
     return;
   }
 
-  let commit = git::parse_commit(&blob).unwrap();
+  let commit = git::parse_commit_blob(&blob).unwrap();
   println!("{:#?}", commit);
   return;
 }

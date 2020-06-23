@@ -7,14 +7,20 @@
  */
 
 use crate::git::raw_commit::*;
+use crate::git::git;
 use chrono::prelude::*;
 
 #[derive(Debug)]
 pub struct Commit {
-  committed_at: DateTime<FixedOffset>,
+  pub committed_at: DateTime<FixedOffset>,
 }
 
-pub fn parse_commit(data: &str) -> Option<Commit> {
+pub fn get_commit(commitish: &str) -> Option<Commit> {
+  let blob = git(&["cat-file", "commit", commitish])?;
+  parse_commit_blob(&blob)
+}
+
+pub fn parse_commit_blob(data: &str) -> Option<Commit> {
   let raw = parse_raw_commit(data)?;
   let committer = &raw.fields["committer"];
   let mut words: Vec<&str> = committer.split(" ").collect();
