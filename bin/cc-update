@@ -52,7 +52,6 @@ echo $REMOTE | ccstagefile upstream.ref
 git config remote.$(echo $REMOTE | cut -f3 -d/).url | ccstagefile upstream.url
 git rev-parse HEAD | ccstagefile HEAD
 META_PARENT=$(ccgit show-ref --hash ${META_REF} || true)
-echo "FOO $META_PARENT"
 if [ -z "$META_PARENT" ]; then
   if "${CC_DEBUG:-false}"; then
     echo "meta\tOrphan commit" >&2
