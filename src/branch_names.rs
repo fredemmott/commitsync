@@ -8,7 +8,7 @@
 
 use crate::{git::*, *};
 
-pub fn create_branch_name() -> Result<String, GitError> {
+pub fn create_meta_branch_name() -> Result<String, GitError> {
   let remote_ref =
     git::get_upstream()?.expect("Need an upstream before using CommitSync");
   let remote_branch = remote_ref.split("/").last().expect("Malformed ref");
@@ -20,70 +20,67 @@ pub fn create_branch_name() -> Result<String, GitError> {
   let head_date = head_info.committed_at.format("%Y-%m-%d");
 
   Ok(format!(
-    "cs-{}-{}-{}-{}",
+    "csmeta-{}-{}-{}-{}",
     head_date, remote_branch, remote_shorthash, head_shorthash,
   ))
 }
 
-fn get_original_cs_branch_name_for_cs_ref(
-  cs_refname: &str,
-) -> Result<String, GitError> {
-  let branch_suffix = cs_refname.split("/cs-").last().expect("bad ref format");
-  let meta_ref = format!("refs/heads/csmeta-{}", &branch_suffix);
-
-  Ok(
-    git::cs_git(&["cat-file", "blob", &format!("{}:commit.ref", meta_ref)])?
-      .split("/")
-      .last()
-      .expect("bad ref format")
-      .to_string(),
-  )
+pub fn create_branch_name() -> Result<String, GitError> {
+  Ok(format!("cs-{}", create_meta_branch_name()?[7..].to_string()))
 }
 
-fn get_original_cs_branch_name_for_commit(
+fn get_meta_for_commit(
   commitish: &str,
-) -> Result<String, GitError> {
-  let refname = git::cs_git(&[
+) -> Result<(String, BranchMetadata), GitError> {
+  let cs_ref = git::cs_git(&[
     "for-each-ref",
     "--points-at",
     commitish,
     "--format=%(refname)",
     "refs/heads/cs-*",
   ])?;
-  get_original_cs_branch_name_for_cs_ref(&refname)
+  let meta_ref = format!("refs/heads/csmeta-{}", cs_ref.split("/cs-").last().unwrap());
+  let meta = meta_branch_info(&meta_ref)?;
+  Ok((meta_ref, meta))
 }
 
-pub fn get_branch_name() -> Result<String, GitError> {
-  let head_branch = git::git(&["symbolic-ref", "HEAD"])?
-    .split("/")
-    .last()
-    .expect("invalid ref name")
-    .to_string();
+pub fn get_meta_branch_name() -> Result<String, GitError> {
+  // Re-use a branch if all of:
+  // - the original branch name is the same
+  // - author username is the same
+  // - hostname is the same
+  // - it was either attached to the current commit already or the parent
+  //
+  // Common case is the parent; current commit is generally when debugging, or if not
+  // using the commit hook.
+  let head_ref = git::git(&["symbolic-ref", "HEAD"])?;
+  let user = whoami::username();
+  let host = gethostname::gethostname().into_string().unwrap();
+  let reuse_key = (head_ref, user, host);
 
   let head = git::git(&["rev-parse", "HEAD"])?;
-  match get_original_cs_branch_name_for_commit(&head) {
-    Ok(branch) => {
-      if branch == head_branch {
-        return Ok(head_branch);
+  match get_meta_for_commit(&head) {
+    Ok((meta_ref, meta)) => {
+      if (meta.commit_ref, meta.user, meta.hostname) == reuse_key {
+        return Ok(meta_ref.split("/").last().unwrap().to_string());
       }
     }
     Err(_) => (),
   }
 
   let parent = git::git(&["rev-parse", "HEAD^"])?;
-  match get_original_cs_branch_name_for_commit(&parent) {
-    Ok(branch) => {
-      if branch == head_branch {
-        return Ok(head_branch);
+  match get_meta_for_commit(&parent) {
+    Ok((meta_ref, meta)) => {
+      if (meta.commit_ref, meta.user, meta.hostname) == reuse_key {
+        return Ok(meta_ref.split("/").last().unwrap().to_string());
       }
     }
     Err(_) => (),
   }
 
-  create_branch_name()
+  create_meta_branch_name()
 }
 
-pub fn get_meta_branch_name() -> Result<String, GitError> {
-  let cs_branch = get_branch_name()?;
-  Ok(format!("csmeta-{}", &cs_branch[3..]))
+pub fn get_branch_name() -> Result<String, GitError> {
+  Ok(format!("cs-{}", get_meta_branch_name()?[7..].to_string()))
 }

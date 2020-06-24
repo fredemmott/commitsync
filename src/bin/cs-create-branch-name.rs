@@ -16,6 +16,10 @@ use commitsync::{branch_names::*, *};
  * This is a debugging tool, not intended for regular use.
  */
 pub fn main() -> Result<(), CSError> {
-  println!("{}", create_branch_name()?);
+  println!(
+    "Data: {}\nMeta: {}",
+    create_branch_name()?,
+    create_meta_branch_name()?,
+  );
   Ok(())
 }
