@@ -108,7 +108,23 @@ fn fetch_data() -> Result<(), CSError> {
   Ok(())
 }
 
+#[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
+#[cfg(target_family = "unix")]
+fn make_executable(path: &std::path::PathBuf) -> () {
+	let mut perms = std::fs::metadata(&path)
+		.expect("retrieving permissions")
+		.permissions();
+	perms.set_mode(0o755);
+	std::fs::set_permissions(&path, perms)
+		.expect("Failed to chmod 755 the commit hook");
+
+}
+
+#[cfg(target_family = "windows")]
+fn make_executable(_path: &std::path::PathBuf) -> () {
+  // nothing to do
+}
 
 fn setup_hook() -> Result<(), CSError> {
   let line = "git cs post-commit";
@@ -133,13 +149,7 @@ fn setup_hook() -> Result<(), CSError> {
 
   std::fs::write(&path, &format!("#!/bin/sh\n{}\n", &line))
     .expect("Failed to write hook");
-  let mut perms = std::fs::metadata(&path)
-    .expect("retrieving permissions")
-    .permissions();
-  perms.set_mode(0o755);
-  std::fs::set_permissions(&path, perms)
-    .expect("Failed to chmod 755 the commit hook");
-
+  make_executable(&path);
   Ok(())
 }
 
