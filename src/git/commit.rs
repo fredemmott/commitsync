@@ -16,7 +16,7 @@ pub struct Commit {
 }
 
 pub fn get_commit(commitish: &str) -> Option<Commit> {
-  let blob = git(&["cat-file", "commit", commitish])?;
+  let blob = git(&["cat-file", "commit", commitish]).expect("cat-file failed");
   parse_commit_blob(&blob)
 }
 

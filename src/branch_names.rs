@@ -6,36 +6,38 @@
  * in the root directory of this source tree.
  */
 
-use crate::git;
+use crate::{git, Result};
 
-pub fn create_branch_name() -> Option<String> {
-  let remote_ref = git::get_upstream()?;
-  let remote_branch = remote_ref.split("/").last()?;
+pub fn create_branch_name() -> Result<String> {
+  let remote_ref =
+    git::get_upstream()?.expect("Need an upstream before using CommitSync");
+  let remote_branch = remote_ref.split("/").last().expect("Malformed ref");
   let remote_shorthash = git::git(&["rev-parse", "--short", &remote_ref])?;
 
   let head_shorthash = git::git(&["rev-parse", "--short", "HEAD"])?;
-  let head_info = git::get_commit(&head_shorthash)?;
+  let head_info = git::get_commit(&head_shorthash).expect("couldnt read HEAD");
   let head_date = head_info.committed_at.format("%Y-%m-%d");
 
-  Some(format!(
+  Ok(format!(
     "cs-{}-{}-{}-{}",
     head_date, remote_branch, remote_shorthash, head_shorthash,
   ))
 }
 
-fn get_original_cs_branch_name_for_cs_ref(cs_refname: &str) -> Option<String> {
-  let branch = cs_refname.split("/").last()?;
+fn get_original_cs_branch_name_for_cs_ref(cs_refname: &str) -> Result<String> {
+  let branch = cs_refname.split("/").last().expect("bad ref format");
   let meta_ref = format!("refs/heads/csmeta-{}", branch);
 
-  Some(
+  Ok(
     git::cs_git(&["cat-file", "blob", &format!("{}:commit.ref", meta_ref)])?
       .split("/")
-      .last()?
+      .last()
+      .expect("bad ref format")
       .to_string(),
   )
 }
 
-fn get_original_cs_branch_name_for_commit(commitish: &str) -> Option<String> {
+fn get_original_cs_branch_name_for_commit(commitish: &str) -> Result<String> {
   let refname = git::cs_git(&[
     "for-each-ref",
     "--points-at",
@@ -46,36 +48,37 @@ fn get_original_cs_branch_name_for_commit(commitish: &str) -> Option<String> {
   get_original_cs_branch_name_for_cs_ref(&refname)
 }
 
-pub fn get_branch_name() -> Option<String> {
+pub fn get_branch_name() -> Result<String> {
   let head_branch = git::git(&["symbolic-ref", "HEAD"])?
     .split("/")
-    .last()?
+    .last()
+    .expect("invalid ref name")
     .to_string();
 
   let head = git::git(&["rev-parse", "HEAD"])?;
   match get_original_cs_branch_name_for_commit(&head) {
-    Some(branch) => {
+    Ok(branch) => {
       if branch == head_branch {
-        return Some(head_branch);
+        return Ok(head_branch);
       }
     }
-    None => (),
+    Err(_) => (),
   }
 
   let parent = git::git(&["rev-parse", "HEAD^"])?;
   match get_original_cs_branch_name_for_commit(&parent) {
-    Some(branch) => {
+    Ok(branch) => {
       if branch == head_branch {
-        return Some(head_branch);
+        return Ok(head_branch);
       }
     }
-    None => (),
+    Err(_) => (),
   }
 
   create_branch_name()
 }
 
-pub fn get_meta_branch_name() -> Option<String> {
+pub fn get_meta_branch_name() -> Result<String> {
   let cs_branch = get_branch_name()?;
-  Some(format!("ccmeta-{}", &cs_branch[3..]))
+  Ok(format!("ccmeta-{}", &cs_branch[3..]))
 }

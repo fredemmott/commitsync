@@ -11,40 +11,36 @@ use subprocess::{Exec, Redirection};
 // Specific to avoid a circular dependency
 use crate::git::dirs::cs_git_dir;
 
+use crate::Result;
+
 /// Execute `git` in the real repository.
-pub fn git(args: &[&str]) -> Option<String> {
-  match Exec::cmd("git")
+pub fn git(args: &[&str]) -> Result<String> {
+  let out = Exec::cmd("git")
     .args(args)
     .stdout(Redirection::Pipe)
     .stderr(Redirection::Merge)
-    .capture()
-  {
-    Ok(data) => {
-      let str = data.stdout_str();
-      Some(str.trim().to_string())
-    }
-    Err(_) => None,
-  }
+    .capture()?
+    .stdout_str()
+    .trim()
+    .to_string();
+  Ok(out)
 }
 
 /// Execute `git` in the CommitSync repository.
-pub fn cs_git(args: &[&str]) -> Option<String> {
+pub fn cs_git(args: &[&str]) -> Result<String> {
   let git_dir = cs_git_dir()?;
   let mut index_file = git_dir.clone();
   index_file.push("index");
 
-  match Exec::cmd("git")
+  let out = Exec::cmd("git")
     .args(args)
     .stdout(Redirection::Pipe)
     .stderr(Redirection::Merge)
     .env("GIT_DIR", &git_dir)
     .env("GIT_INDEX_FILE", &index_file)
-    .capture()
-  {
-    Ok(data) => {
-      let str = data.stdout_str();
-      Some(str.trim().to_string())
-    }
-    Err(_) => None,
-  }
+    .capture()?
+    .stdout_str()
+    .trim()
+    .to_string();
+  Ok(out)
 }

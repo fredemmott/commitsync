@@ -8,15 +8,16 @@
 
 use crate::git::dirs::*;
 use crate::git::*;
+use crate::Result;
 use colored::*;
 use std::fs::File;
 use std::io::prelude::*;
 
-fn create_repo() -> Option<()> {
+fn create_repo() -> Result<()> {
   println!("Creating local repo...");
   let git_dir = real_git_dir()?.into_os_string().into_string().unwrap();
   let cs_git_dir = cs_git_dir()?.into_os_string().into_string().unwrap();
-  git(&["init", "--bare", &cs_git_dir]);
+  git(&["init", "--bare", &cs_git_dir])?;
 
   let mut file =
     File::create(&format!("{}/objects/info/alternates", &cs_git_dir)).unwrap();
@@ -29,34 +30,33 @@ fn create_repo() -> Option<()> {
     .write_all(&format!("{}/objects", &cs_git_dir).into_bytes())
     .unwrap();
 
-  Some(())
+  Ok(())
 }
 
-fn add_alias() -> Option<()> {
-  let global_alias =
-    git(&["config", "alias.cs"]).unwrap_or(String::new());
-  if global_alias == "" {
-    return Some(());
+fn add_alias() -> Result<()> {
+  let global_alias = git(&["config", "alias.cs"]).unwrap_or(String::new());
+  if global_alias != "" {
+    return Ok(());
   }
 
-  println!("Where would like `git cs` to work?");
+  println!("{}", "Where would like `git cs` to work?".bold());
   println!(" - {}: on the system", "global".green());
   println!("   - useful if you want to use CommitSync with multiple repos");
   println!("   - useful if you use containers (e.g. WSL, Docker)");
   println!(" - {}: just this repo", "local".green());
-  None
+  // INCOMPLETE
+  Ok(())
 }
 
-pub fn init_repo() -> Option<()> {
+pub fn init_repo() -> Result<()> {
   if cs_git_dir()?.exists() {
-    eprintln!(
+    return Err(crate::Error::UserError(format!(
       "{} already exists, aborting.",
       &cs_git_dir()?.into_os_string().into_string().unwrap()
-    );
-    return None;
+    )));
   }
   create_repo()?;
-  add_alias();
+  add_alias()?;
 
-  None
+  Ok(())
 }

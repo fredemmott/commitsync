@@ -10,9 +10,8 @@
  *
  * This is a debugging tool, not intended for regular use.
  */
-pub fn main() -> () {
-  match commitsync::store_commit() {
-    Some((cs_ref, cs_meta_ref)) => println!("{}\n{}", &cs_ref, cs_meta_ref),
-    None => eprintln!("Commit failed"),
-  }
+pub fn main() -> commitsync::Result<()> {
+  let (cs_ref, cs_meta_ref) = commitsync::store_commit()?;
+  println!("{}\n{}", &cs_ref, cs_meta_ref);
+  Ok(())
 }

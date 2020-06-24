@@ -6,26 +6,23 @@
  * in the root directory of this source tree.
  */
 
-use crate::git::git;
+use crate::{git::git, Result};
 
 /** Find the upstream for the current branch.
  *
  * This will walk backwards through the commit history until it finds a commit
  * that is the head of a remote branch.
  */
-pub fn get_upstream() -> Option<String> {
+pub fn get_upstream() -> Result<Option<String>> {
   let raw_refs = git(&[
     "for-each-ref",
     "--format=%(objectname) %(refname)",
     "refs/remotes/",
   ])?;
-  if raw_refs.is_empty() {
-    return None;
-  }
 
   let raw_commits = git(&["rev-list", "HEAD"])?;
   if raw_commits.is_empty() {
-    return None;
+    return Ok(None);
   }
 
   let refs: Vec<(&str, &str)> = raw_refs
@@ -39,9 +36,9 @@ pub fn get_upstream() -> Option<String> {
   let commits = raw_commits.split("\n");
   for commit in commits {
     match refs.iter().find(|(ref_commit, _)| ref_commit == &commit) {
-      Some((_, refname)) => return Some(refname.to_string()),
+      Some((_, refname)) => return Ok(Some(refname.to_string())),
       None => (),
     }
   }
-  None
+  Ok(None)
 }

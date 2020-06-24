@@ -12,12 +12,7 @@ use commitsync::branch_names::*;
  *
  * This is a debugging tool, not intended for regular use.
  */
-pub fn main() -> () {
-  match get_branch_name() {
-    Some(branch) => println!("{}", branch),
-    None => {
-      eprintln!("Failed to get a branch name");
-      std::process::exit(1)
-    }
-  }
+pub fn main() -> commitsync::Result<()> {
+  println!("{}", &get_branch_name()?);
+  Ok(())
 }

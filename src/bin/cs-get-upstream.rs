@@ -12,12 +12,10 @@ use commitsync::git;
  *
  * This is a debugging tool, not intended for regular use.
  */
-pub fn main() -> () {
-  match git::get_upstream() {
-    Some(refname) => println!("{}", refname),
-    None => {
-      println!("");
-      std::process::exit(1)
-    }
+pub fn main() -> commitsync::Result<()> {
+  match git::get_upstream()? {
+    Some(refname) => println!("{}", &refname),
+    None => std::process::exit(1),
   }
+  Ok(())
 }

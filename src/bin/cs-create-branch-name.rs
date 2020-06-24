@@ -15,12 +15,7 @@ use commitsync::branch_names::*;
  *
  * This is a debugging tool, not intended for regular use.
  */
-pub fn main() -> () {
-  match create_branch_name() {
-    Some(branch) => println!("{}", branch),
-    None => {
-      eprintln!("Failed to create a branch name");
-      std::process::exit(1)
-    }
-  }
+pub fn main() -> commitsync::Result<()> {
+  println!("{}", create_branch_name()?);
+  Ok(())
 }
