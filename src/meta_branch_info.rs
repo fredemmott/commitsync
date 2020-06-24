@@ -18,7 +18,7 @@ pub struct BranchMetadata {
   pub upstream_url: String,
   pub hostname: String,
   pub user: String,
-  pub meta_committed_at: DateTime<FixedOffset>,
+  pub meta_committed_at: Option<DateTime<FixedOffset>>,
 }
 
 fn cat_file(meta_ref: &str, path: &str) -> Result<String, GitError> {
@@ -34,6 +34,29 @@ pub fn meta_branch_info(meta_ref: &str) -> Result<BranchMetadata, GitError> {
     upstream_url: cat_file(meta_ref, "upstream.url")?,
     hostname: cat_file(meta_ref, "hostname")?,
     user: cat_file(meta_ref, "user")?,
-    meta_committed_at: get_cs_commit(meta_ref)?.committed_at,
+    meta_committed_at: Some(get_cs_commit(meta_ref)?.committed_at),
   })
+}
+
+impl BranchMetadata {
+  pub fn from_current_commit() -> Result<BranchMetadata, GitError> {
+    let upstream_ref = get_upstream()?.expect("Expected a branch");
+
+    Ok(BranchMetadata {
+      commit_sha: git(&["rev-parse", "HEAD"])?,
+      commit_ref: git(&["symbolic-ref", "HEAD"])?,
+      upstream_ref: upstream_ref.to_string(),
+      upstream_sha: git(&["rev-parse", &upstream_ref])?,
+      upstream_url: git(&[
+        "config",
+        &format!(
+          "remote.{}.url",
+          upstream_ref.split("/").collect::<Vec<&str>>()[2]
+        ),
+      ])?,
+      hostname: gethostname::gethostname().into_string().unwrap(),
+      user: whoami::username(),
+      meta_committed_at: None,
+    })
+  }
 }

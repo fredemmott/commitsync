@@ -6,7 +6,7 @@
  * in the root directory of this source tree.
  */
 
-use crate::{branch_names::*, git::*};
+use crate::{branch_names::*, git::*, *};
 use std::io::prelude::*;
 use tempfile::NamedTempFile;
 
@@ -29,32 +29,18 @@ fn stage_file(name: &str, content: &str) -> Result<(), GitError> {
 }
 
 fn commit_metadata(cs_meta_ref: &str) -> Result<String, GitError> {
-  stage_file(
-    "hostname",
-    &gethostname::gethostname().into_string().unwrap(),
-  )?;
-  stage_file("user", &whoami::username())?;
+  let meta = BranchMetadata::from_current_commit()?;
 
-  let head_sha = git(&["rev-parse", "HEAD"])?;
-  stage_file("commit.sha", &head_sha)?;
-  stage_file("commit.ref", &git(&["symbolic-ref", "HEAD"])?)?;
-
-  let upstream_ref = get_upstream()?.expect("Expected an upstream");
-  stage_file("upstream.ref", &upstream_ref)?;
-  stage_file("upstream.sha", &git(&["rev-parse", &upstream_ref])?)?;
-  stage_file(
-    "upstream.url",
-    &git(&[
-      "config",
-      &format!(
-        "remote.{}.url",
-        upstream_ref.split("/").collect::<Vec<&str>>()[2]
-      ),
-    ])?,
-  )?;
+  stage_file("commit.sha", &meta.commit_sha)?;
+  stage_file("commit.ref", &meta.commit_ref)?;
+  stage_file("upstream.ref", &meta.upstream_ref)?;
+  stage_file("upstream.sha", &meta.upstream_sha)?;
+  stage_file("upstream.url", &meta.upstream_url)?;
+  stage_file("hostname", &meta.hostname)?;
+  stage_file("user", &meta.user)?;
 
   let tree = cs_git(&["write-tree"])?;
-  let message = format!("Metadata for {}", &head_sha);
+  let message = format!("Metadata for {}", &meta.commit_sha);
 
   // Continue a branch or start a new one as an orphan?
   match cs_git(&["show-ref", "--hash", cs_meta_ref]) {
@@ -81,7 +67,7 @@ pub fn store_commit() -> Result<(String, String), GitError> {
   cs_git(&["update-ref", &cs_meta_ref, &cs_meta_sha])?;
   cs_git(&["update-ref", &cs_ref, &cs_sha])?;
 
-  let _ignore_failure = cs_git(&["push", "commitsync", &cs_ref, &cs_meta_ref]);
+  cs_git(&["push", "commitsync", &cs_ref, &cs_meta_ref])?;
 
   Ok((cs_ref, cs_meta_ref))
 }

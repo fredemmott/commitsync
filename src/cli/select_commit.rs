@@ -21,7 +21,7 @@ fn fetch() -> () {
 pub fn print_meta(n: u16, meta: &BranchMetadata) -> Result<(), GitError> {
   let (cols, _) = term_size::dimensions().unwrap_or((80, 0));
 
-  let date = format!("{}", meta.meta_committed_at.format("%Y-%m-%d %X"));
+  let date = format!("{}", meta.meta_committed_at.unwrap().format("%Y-%m-%d %X"));
   println!(
     "{}{}\r{} Branch {} {}",
     " ".repeat(cols - date.len()),
