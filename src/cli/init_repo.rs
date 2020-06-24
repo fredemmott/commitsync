@@ -8,13 +8,12 @@
 
 use crate::git::dirs::*;
 use crate::git::*;
-use crate::FIXMEResult as Result;
 use crate::*;
 use colored::*;
 use std::fs::File;
 use std::io::prelude::*;
 
-fn create_repo() -> Result<()> {
+fn create_repo() -> Result<(), CSError> {
   println!("Creating local repo...");
   let git_dir = real_git_dir()?.into_os_string().into_string().unwrap();
   let cs_git_dir = cs_git_dir()?.into_os_string().into_string().unwrap();
@@ -34,7 +33,7 @@ fn create_repo() -> Result<()> {
   Ok(())
 }
 
-fn add_alias() -> Result<()> {
+fn add_alias() -> Result<(), CSError> {
   let global_alias = git(&["config", "alias.cs"]).unwrap_or(String::new());
   if global_alias != "" {
     return Ok(());
@@ -74,7 +73,7 @@ fn add_alias() -> Result<()> {
   }
 }
 
-fn configure_remote() -> Result<()> {
+fn configure_remote() -> Result<(), CSError> {
   println!(
     "Where should CommitSync push?
 
@@ -101,7 +100,7 @@ Example: git@example.com:commitsync/myrepo.git"
   Ok(())
 }
 
-fn fetch_data() -> Result<()> {
+fn fetch_data() -> Result<(), CSError> {
   println!("Fetching remote CommitSync data...");
   cs_git(&["fetch"])?;
   println!("...done!");
@@ -110,7 +109,7 @@ fn fetch_data() -> Result<()> {
 
 use std::os::unix::fs::PermissionsExt;
 
-fn setup_hook() -> Result<()> {
+fn setup_hook() -> Result<(), CSError> {
   let line = "git cs post-commit";
   let mut path = real_git_dir()?;
   path.push("hooks");
@@ -141,7 +140,7 @@ fn setup_hook() -> Result<()> {
   Ok(())
 }
 
-pub fn init_repo() -> Result<()> {
+pub fn init_repo() -> Result<(), CSError> {
   if cs_git_dir()?.exists() {
     return Err(CSError::UserError(format!(
       "{} already exists, aborting.",
