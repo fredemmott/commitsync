@@ -14,30 +14,28 @@ use crate::git::*;
  * that is the head of a remote branch.
  */
 pub fn get_upstream() -> Result<Option<String>, GitError> {
-  let raw_refs = git(&[
-    "for-each-ref",
-    "--format=%(objectname) %(refname)",
-    "refs/remotes/",
-  ])?;
-
   let raw_commits = git(&["rev-list", "HEAD"])?;
   if raw_commits.is_empty() {
     return Ok(None);
   }
 
-  let refs: Vec<(&str, &str)> = raw_refs
-    .split("\n")
-    .map(|line| {
-      let parts: Vec<&str> = line.split(" ").collect();
-      (parts[0], parts[1])
-    })
-    .collect();
-
   let commits = raw_commits.split("\n");
   for commit in commits {
-    match refs.iter().find(|(ref_commit, _)| ref_commit == &commit) {
-      Some((_, refname)) => return Ok(Some(refname.to_string())),
-      None => (),
+    match git(&[
+      "name-rev",
+      "--no-undefined",
+      "--name-only",
+      "--exclude=HEAD",
+      "--ref=refs/remotes/*",
+      &commit,
+    ]) {
+      Ok(ref_name) => {
+        return Ok(Some(format!(
+          "refs/{}",
+          ref_name.split("~").nth(0).expect("Couldn't split ref name")
+        )))
+      }
+      _ => (),
     }
   }
   Ok(None)
