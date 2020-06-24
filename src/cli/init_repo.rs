@@ -53,7 +53,8 @@ fn add_alias() -> Result<(), CSError> {
     .expect("should have a current exe")
     .into_os_string()
     .into_string()
-    .expect("Invalid UTF8");
+    .expect("Invalid UTF8")
+    .replace("\\", "/");
   let alias = format!("!{}", exe);
   loop {
     std::io::stdin()
@@ -112,13 +113,12 @@ fn fetch_data() -> Result<(), CSError> {
 use std::os::unix::fs::PermissionsExt;
 #[cfg(target_family = "unix")]
 fn make_executable(path: &std::path::PathBuf) -> () {
-	let mut perms = std::fs::metadata(&path)
-		.expect("retrieving permissions")
-		.permissions();
-	perms.set_mode(0o755);
-	std::fs::set_permissions(&path, perms)
-		.expect("Failed to chmod 755 the commit hook");
-
+  let mut perms = std::fs::metadata(&path)
+    .expect("retrieving permissions")
+    .permissions();
+  perms.set_mode(0o755);
+  std::fs::set_permissions(&path, perms)
+    .expect("Failed to chmod 755 the commit hook");
 }
 
 #[cfg(target_family = "windows")]
