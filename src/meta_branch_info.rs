@@ -13,7 +13,9 @@ use chrono::prelude::*;
 pub struct BranchMetadata {
   pub commit_ref: String,
   pub commit_sha: String,
+  pub upstream_ref: String,
   pub upstream_sha: String,
+  pub upstream_url: String,
   pub hostname: String,
   pub user: String,
   pub meta_committed_at: DateTime<FixedOffset>,
@@ -27,7 +29,9 @@ pub fn meta_branch_info(meta_ref: &str) -> Result<BranchMetadata, GitError> {
   Ok(BranchMetadata {
     commit_sha: cat_file(meta_ref, "commit.sha")?,
     commit_ref: cat_file(meta_ref, "commit.ref")?,
+    upstream_ref: cat_file(meta_ref, "upstream.ref")?,
     upstream_sha: cat_file(meta_ref, "upstream.sha")?,
+    upstream_url: cat_file(meta_ref, "upstream.url")?,
     hostname: cat_file(meta_ref, "hostname")?,
     user: cat_file(meta_ref, "user")?,
     meta_committed_at: get_cs_commit(meta_ref)?.committed_at,
