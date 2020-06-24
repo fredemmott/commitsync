@@ -6,6 +6,8 @@
  * in the root directory of this source tree.
  */
 
+use colored::*;
+use std::io::prelude::*;
 use structopt::StructOpt;
 
 enum Command {
@@ -54,7 +56,17 @@ fn main() -> () {
       if dir.exists() {
         run(&Command::Select, &cli)
       } else {
-        run(&Command::Init, &cli)
+        print!(
+          "{}",
+          "Would you like to initialize CommitSync? y/n [y]> ".bold()
+        );
+        std::io::stdout().flush().unwrap();
+        let mut buf = String::new();
+        std::io::stdin().read_line(&mut buf).unwrap();
+        match buf.trim() {
+          "" | "y" | "yes" => run(&Command::Init, &cli),
+          _ => (),
+        }
       }
     }
   }
