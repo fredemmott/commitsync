@@ -16,8 +16,13 @@ pub struct Commit {
   pub committed_at: DateTime<FixedOffset>,
 }
 
-pub fn get_commit(commitish: &str) -> Result<Commit, GitError> {
+pub fn get_real_commit(commitish: &str) -> Result<Commit, GitError> {
   let blob = git(&["cat-file", "commit", commitish])?;
+  Ok(parse_commit_blob(&blob).expect("parse commit"))
+}
+
+pub fn get_cs_commit(commitish: &str) -> Result<Commit, GitError> {
+  let blob = cs_git(&["cat-file", "commit", commitish])?;
   Ok(parse_commit_blob(&blob).expect("parse commit"))
 }
 

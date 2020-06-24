@@ -30,6 +30,6 @@ pub fn meta_branch_info(meta_ref: &str) -> Result<BranchMetadata, GitError> {
     upstream_sha: cat_file(meta_ref, "upstream.sha")?,
     hostname: cat_file(meta_ref, "hostname")?,
     user: cat_file(meta_ref, "user")?,
-    meta_committed_at: get_commit(meta_ref)?.committed_at,
+    meta_committed_at: get_cs_commit(meta_ref)?.committed_at,
   })
 }
