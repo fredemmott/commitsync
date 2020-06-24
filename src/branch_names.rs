@@ -74,3 +74,8 @@ pub fn get_branch_name() -> Option<String> {
 
   create_branch_name()
 }
+
+pub fn get_meta_branch_name() -> Option<String> {
+  let cs_branch = get_branch_name()?;
+  Some(format!("ccmeta-{}", &cs_branch[3..]))
+}

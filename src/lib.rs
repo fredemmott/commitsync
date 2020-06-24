@@ -8,3 +8,6 @@
 
 pub mod branch_names;
 pub mod git;
+
+mod store_commit;
+pub use store_commit::store_commit;
