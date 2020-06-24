@@ -18,47 +18,6 @@ fn fetch() -> () {
   }
 }
 
-pub fn print_meta(n: u16, meta: &BranchMetadata) -> Result<(), GitError> {
-  let (cols, _) = term_size::dimensions().unwrap_or((80, 0));
-
-  let date = format!("{}", meta.meta_committed_at.unwrap().format("%Y-%m-%d %X"));
-  println!(
-    "{}{}\r{} Branch {} {}",
-    " ".repeat(cols - date.len()),
-    date.yellow().bold(),
-    format!("{}.", n).bold(),
-    meta
-      .commit_ref
-      .split("/")
-      .last()
-      .expect("valid ref")
-      .bold()
-      .green(),
-    format!(
-      "({}@{})",
-      &meta.user,
-      &meta
-        .hostname
-        .split(".")
-        .nth(0)
-        .expect("expected a hostname")
-    )
-    .cyan(),
-  );
-
-  // Just printing to the user, so using porcelain is fine
-  let log = git(&[
-    "log",
-    "--graph",
-    &format!("--format={}%<|({},trunc) %s", "%h".yellow(), cols - 2),
-    &format!("{}..{}", &meta.upstream_sha, &meta.commit_sha),
-  ])?;
-  for line in log.lines() {
-    println!("  {}", line);
-  }
-  Ok(())
-}
-
 pub fn select_commit() -> Result<(), CSError> {
   fetch();
 
@@ -79,15 +38,71 @@ pub fn select_commit() -> Result<(), CSError> {
     return Ok(());
   }
 
-  let metas = refs
+  let metas: Vec<(String, BranchMetadata)> = refs
     .split("\n")
-    .map(|name| meta_branch_info(name).expect("Failed to load meta branch"))
-    .unique_by(|info| info.commit_sha.to_string());
+    .map(|name| {
+      (
+        name.split("/csmeta-").last().unwrap().to_string(),
+        meta_branch_info(name).expect("Failed to load meta branch"),
+      )
+    })
+    .unique_by(|(_name, meta)| meta.commit_sha.to_string())
+    .collect();
 
-  let mut i: u16 = 0;
-  for meta in metas {
-    i += 1;
-    print_meta(i, &meta)?;
+  let start_tag = "<<<CS_REFS(";
+  let end_tag = ")CS_REFS>>>";
+  let mut args: Vec<String> = ["log", "--graph", "--color"]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+  args.push(format!("--format={}%D{}%h %s", &start_tag, &end_tag));
+  for (_, meta) in &metas {
+    args.push(format!("{}..{}", &meta.upstream_sha, &meta.commit_sha))
+  }
+  let log = cs_git(&args)?;
+  let metas: std::collections::HashMap<_, _> = metas.into_iter().collect();
+
+  for line in log.lines() {
+    match line.find(end_tag) {
+      None => println!("{}", line),
+      Some(end_tag_pos) => {
+        let start_tag_pos = line.find(start_tag).expect("a start tag");
+        if end_tag_pos == start_tag_pos + start_tag.len() {
+          println!(
+            "{}{}",
+            &line[..start_tag_pos],
+            &line[end_tag_pos + end_tag.len()..]
+          );
+          continue;
+        }
+
+        let keys = line[(start_tag_pos + start_tag.len())..end_tag_pos]
+          .split(", ")
+          .map(|ref_name| {
+            if &ref_name[0..3] == "cs-" {
+              &ref_name[3..]
+            } else {
+              ref_name.split("/cs-").last().unwrap()
+            }
+          });
+        for key in keys {
+          let meta = &metas[key];
+          println!(
+            "{}{}@{} by {} at {}",
+            &line[..start_tag_pos],
+            &meta.commit_ref.split("/").last().unwrap().green().bold(),
+            &meta.hostname.split(".").nth(0).unwrap().cyan(),
+            &meta.user,
+            &meta.meta_committed_at.expect("commited meta ref").format("%Y-%m-%d %x").to_string().yellow(),
+          );
+        }
+        println!(
+          "{}  {}",
+          &line[..line.find('*').unwrap_or(start_tag_pos - 2)],
+          &line[end_tag_pos + end_tag.len()..]
+        );
+      }
+    }
   }
   Ok(())
 }

@@ -40,21 +40,23 @@ fn exec_git(cmd: subprocess::Exec) -> Result<String, GitError> {
 }
 
 /// Execute `git` in the real repository.
-pub fn git(args: &[&str]) -> Result<String, GitError> {
-  trace("git", args);
-  let cmd = Exec::cmd("git").args(args);
+pub fn git(args: &[impl AsRef<str>]) -> Result<String, GitError> {
+  let args : Vec<&str> = args.iter().map(AsRef::as_ref).collect();
+  trace("git", &args);
+  let cmd = Exec::cmd("git").args(&args);
   exec_git(cmd)
 }
 
 /// Execute `git` in the CommitSync repository.
-pub fn cs_git(args: &[&str]) -> Result<String, GitError> {
-  trace("cs_git", args);
+pub fn cs_git(args: &[impl AsRef<str>]) -> Result<String, GitError> {
+  let args : Vec<&str> = args.iter().map(AsRef::as_ref).collect();
+  trace("cs_git", &args);
   let git_dir = cs_git_dir()?;
   let mut index_file = git_dir.clone();
   index_file.push("index");
 
   let cmd = Exec::cmd("git")
-    .args(args)
+    .args(&args)
     .env("GIT_DIR", &git_dir)
     .env("GIT_INDEX_FILE", &index_file);
   exec_git(cmd)
