@@ -91,7 +91,8 @@ Example: git@example.com:commitsync/myrepo.git"
     std::io::stdin()
       .read_line(&mut url)
       .expect("Failed to read a line?");
-    match &url.trim()[..] {
+    url = url.trim().to_string();
+    match &url[..] {
       "" => (),
       _ => break,
     }
@@ -132,10 +133,12 @@ fn setup_hook() -> Result<(), CSError> {
 
   std::fs::write(&path, &format!("#!/bin/sh\n{}\n", &line))
     .expect("Failed to write hook");
-  let mut perms = std::fs::metadata(path)
+  let mut perms = std::fs::metadata(&path)
     .expect("retrieving permissions")
     .permissions();
   perms.set_mode(0o755);
+  std::fs::set_permissions(&path, perms)
+    .expect("Failed to chmod 755 the commit hook");
 
   Ok(())
 }
