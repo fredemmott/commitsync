@@ -9,13 +9,17 @@
 use crate::{git::*, *};
 use colored::*;
 use itertools::Itertools;
+use std::io::prelude::*;
 
 fn fetch() -> () {
-  println!("Fetching...");
+  print!("Fetching...");
+  let _ = std::io::stdout().flush();
   match cs_git(&["fetch", "commitsync"]) {
     Ok(_) => (),
     Err(_) => eprintln!("  {}", "Fetching failed, showing stale data".red()),
   }
+  print!("\r");
+  let _ = std::io::stdout().flush();
 }
 
 pub fn select_commit() -> Result<(), CSError> {
@@ -51,10 +55,7 @@ pub fn select_commit() -> Result<(), CSError> {
 
   let start_tag = "<<<CS_REFS(";
   let end_tag = ")CS_REFS>>>";
-  let mut args: Vec<String> = ["log", "--graph", "--color"]
-    .iter()
-    .map(|s| s.to_string())
-    .collect();
+  let mut args: Vec<String> = vec!["log".to_string(), "--graph".to_string()];
   args.push(format!(
     "--format={}\n{}%D{}\nAuthor: %aN <%aE>\nDate:   %aD\n\n%s\n",
     "commit %H".yellow(),
