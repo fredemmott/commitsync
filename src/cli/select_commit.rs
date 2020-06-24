@@ -18,6 +18,47 @@ fn fetch() -> () {
   }
 }
 
+pub fn print_meta(n: u16, meta: &BranchMetadata) -> Result<(), GitError> {
+  let (cols, _) = term_size::dimensions().unwrap_or((80, 0));
+
+  let date = format!("{}", meta.meta_committed_at.format("%Y-%m-%d %X"));
+  println!(
+    "{}{}\r{} Branch {} {}",
+    " ".repeat(cols - date.len()),
+    date.yellow().bold(),
+    format!("{}.", n).bold(),
+    meta
+      .commit_ref
+      .split("/")
+      .last()
+      .expect("valid ref")
+      .bold()
+      .green(),
+    format!(
+      "({}@{})",
+      &meta.user,
+      &meta
+        .hostname
+        .split(".")
+        .nth(0)
+        .expect("expected a hostname")
+    )
+    .cyan(),
+  );
+
+  // Just printing to the user, so using porcelain is fine
+  let log = git(&[
+    "log",
+    "--graph",
+    &format!("--format={}%<|({},trunc) %s", "%h".yellow(), cols - 2),
+    &format!("{}..{}", &meta.upstream_sha, &meta.commit_sha),
+  ])?;
+  for line in log.lines() {
+    println!("  {}", line);
+  }
+  Ok(())
+}
+
 pub fn select_commit() -> Result<(), CSError> {
   fetch();
 
@@ -43,8 +84,10 @@ pub fn select_commit() -> Result<(), CSError> {
     .map(|name| meta_branch_info(name).expect("Failed to load meta branch"))
     .unique_by(|info| info.commit_sha.to_string());
 
+  let mut i: u16 = 0;
   for meta in metas {
-    println!("{}", &meta.commit_sha);
+    i += 1;
+    print_meta(i, &meta)?;
   }
   Ok(())
 }

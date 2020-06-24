@@ -82,11 +82,19 @@ dependencies = [
  "chrono",
  "colored",
  "gethostname",
+ "itertools",
  "structopt",
  "subprocess",
  "tempfile",
+ "term_size",
  "whoami",
 ]
+
+[[package]]
+name = "either"
+version = "1.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
 
 [[package]]
 name = "gethostname"
@@ -125,6 +133,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9586eedd4ce6b3c498bc3b4dd92fc9f11166aa908a914071953768066c67909"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "itertools"
+version = "0.7.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d47946d458e94a1b7bcabbf6521ea7c037062c81f534615abcad76e84d4970d"
+dependencies = [
+ "either",
 ]
 
 [[package]]
@@ -337,6 +354,16 @@ dependencies = [
  "rand",
  "redox_syscall",
  "remove_dir_all",
+ "winapi",
+]
+
+[[package]]
+name = "term_size"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e4129646ca0ed8f45d09b929036bafad5377103edd06e50bf574b353d2b08d9"
+dependencies = [
+ "libc",
  "winapi",
 ]
 

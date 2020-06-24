@@ -6,6 +6,8 @@
  * in the root directory of this source tree.
  */
 
+extern crate term_size;
+
 pub mod branch_names;
 pub mod cli;
 pub mod git;
