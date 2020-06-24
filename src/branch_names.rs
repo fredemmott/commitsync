@@ -6,9 +6,9 @@
  * in the root directory of this source tree.
  */
 
-use crate::{git, Result};
+use crate::{git::*, *};
 
-pub fn create_branch_name() -> Result<String> {
+pub fn create_branch_name() -> Result<String, GitError> {
   let remote_ref =
     git::get_upstream()?.expect("Need an upstream before using CommitSync");
   let remote_branch = remote_ref.split("/").last().expect("Malformed ref");
@@ -24,7 +24,9 @@ pub fn create_branch_name() -> Result<String> {
   ))
 }
 
-fn get_original_cs_branch_name_for_cs_ref(cs_refname: &str) -> Result<String> {
+fn get_original_cs_branch_name_for_cs_ref(
+  cs_refname: &str,
+) -> Result<String, GitError> {
   let branch = cs_refname.split("/").last().expect("bad ref format");
   let meta_ref = format!("refs/heads/csmeta-{}", branch);
 
@@ -37,7 +39,9 @@ fn get_original_cs_branch_name_for_cs_ref(cs_refname: &str) -> Result<String> {
   )
 }
 
-fn get_original_cs_branch_name_for_commit(commitish: &str) -> Result<String> {
+fn get_original_cs_branch_name_for_commit(
+  commitish: &str,
+) -> Result<String, GitError> {
   let refname = git::cs_git(&[
     "for-each-ref",
     "--points-at",
@@ -48,7 +52,7 @@ fn get_original_cs_branch_name_for_commit(commitish: &str) -> Result<String> {
   get_original_cs_branch_name_for_cs_ref(&refname)
 }
 
-pub fn get_branch_name() -> Result<String> {
+pub fn get_branch_name() -> Result<String, GitError> {
   let head_branch = git::git(&["symbolic-ref", "HEAD"])?
     .split("/")
     .last()
@@ -78,7 +82,7 @@ pub fn get_branch_name() -> Result<String> {
   create_branch_name()
 }
 
-pub fn get_meta_branch_name() -> Result<String> {
+pub fn get_meta_branch_name() -> Result<String, GitError> {
   let cs_branch = get_branch_name()?;
   Ok(format!("ccmeta-{}", &cs_branch[3..]))
 }

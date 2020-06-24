@@ -12,13 +12,13 @@ use std::path::{Path, PathBuf};
 use crate::git::exec::git;
 
 /// Get the `GIT_DIR` of the real repository
-pub fn real_git_dir() -> crate::Result<PathBuf> {
+pub fn real_git_dir() -> Result<PathBuf, crate::GitError> {
   let raw = git(&["rev-parse", "--absolute-git-dir"])?;
   Ok(Path::new(&raw).to_path_buf())
 }
 
 /// Get the `GIT_DIR` of the CommitSync repository
-pub fn cs_git_dir() -> crate::Result<PathBuf> {
+pub fn cs_git_dir() -> Result<PathBuf, crate::GitError> {
   let mut path = real_git_dir()?;
   path.push("CommitSync");
   Ok(path)

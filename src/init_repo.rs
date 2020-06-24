@@ -8,7 +8,8 @@
 
 use crate::git::dirs::*;
 use crate::git::*;
-use crate::Result;
+use crate::FIXMEResult as Result;
+use crate::*;
 use colored::*;
 use std::fs::File;
 use std::io::prelude::*;
@@ -54,7 +55,7 @@ fn add_alias() -> Result<()> {
     .into_os_string()
     .into_string()
     .expect("Invalid UTF8");
-    let alias = format!("!{}", exe);
+  let alias = format!("!{}", exe);
   loop {
     std::io::stdin()
       .read_line(&mut buf)
@@ -63,12 +64,12 @@ fn add_alias() -> Result<()> {
       "" | "global" => {
         git(&["config", "--global", "alias.cs", &alias])?;
         return Ok(());
-      },
+      }
       "local" => {
         git(&["config", "alias.cs", &alias])?;
         return Ok(());
-      },
-      _ => eprintln!("Enter 'local' or 'global'")
+      }
+      _ => eprintln!("Enter 'local' or 'global'"),
     }
   }
 }
@@ -92,19 +93,19 @@ Example: git@example.com:commitsync/myrepo.git"
       .read_line(&mut url)
       .expect("Failed to read a line?");
     match &url.trim()[..] {
-        "" => (),
-        _ => break,
+      "" => (),
+      _ => break,
     }
-};
-    cs_git(&["remote", "add", "commitsync", &url])?;
-    Ok(())
+  }
+  cs_git(&["remote", "add", "commitsync", &url])?;
+  Ok(())
 }
 
 fn fetch_data() -> Result<()> {
-    println!("Fetching remote CommitSync data...");
-    cs_git(&["fetch"])?;
-    println!("...done!");
-    Ok(())
+  println!("Fetching remote CommitSync data...");
+  cs_git(&["fetch"])?;
+  println!("...done!");
+  Ok(())
 }
 
 use std::os::unix::fs::PermissionsExt;
@@ -115,20 +116,26 @@ fn setup_hook() -> Result<()> {
   path.push("hooks");
   path.push("post-commit");
   if path.exists() {
-      let content = std::fs::read_to_string(&path).unwrap();
-      if !content.contains(line) {
-        println!(
-          "{}\nTo finish installation, add '{}' to {}",
-          "INSTALLING THE HOOK".bold(),
-          &line,
-          &path.into_os_string().into_string().expect("Invalid UTF8 path"),
-        )
-      }
-      return Ok(());
+    let content = std::fs::read_to_string(&path).unwrap();
+    if !content.contains(line) {
+      println!(
+        "{}\nTo finish installation, add '{}' to {}",
+        "INSTALLING THE HOOK".bold(),
+        &line,
+        &path
+          .into_os_string()
+          .into_string()
+          .expect("Invalid UTF8 path"),
+      )
+    }
+    return Ok(());
   }
 
-  std::fs::write(&path, &format!("#!/bin/sh\n{}\n", &line)).expect("Failed to write hook");
-  let mut perms = std::fs::metadata(path).expect("retrieving permissions").permissions();
+  std::fs::write(&path, &format!("#!/bin/sh\n{}\n", &line))
+    .expect("Failed to write hook");
+  let mut perms = std::fs::metadata(path)
+    .expect("retrieving permissions")
+    .permissions();
   perms.set_mode(0o755);
 
   Ok(())
@@ -136,7 +143,7 @@ fn setup_hook() -> Result<()> {
 
 pub fn init_repo() -> Result<()> {
   if cs_git_dir()?.exists() {
-    return Err(crate::Error::UserError(format!(
+    return Err(CSError::UserError(format!(
       "{} already exists, aborting.",
       &cs_git_dir()?.into_os_string().into_string().unwrap()
     )));

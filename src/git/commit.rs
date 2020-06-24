@@ -6,8 +6,9 @@
  * in the root directory of this source tree.
  */
 
-use crate::git::git;
+use crate::git::exec::*;
 use crate::git::raw_commit::*;
+use crate::*;
 use chrono::prelude::*;
 
 #[derive(Debug)]
@@ -15,9 +16,9 @@ pub struct Commit {
   pub committed_at: DateTime<FixedOffset>,
 }
 
-pub fn get_commit(commitish: &str) -> Option<Commit> {
-  let blob = git(&["cat-file", "commit", commitish]).expect("cat-file failed");
-  parse_commit_blob(&blob)
+pub fn get_commit(commitish: &str) -> Result<Commit, GitError> {
+  let blob = git(&["cat-file", "commit", commitish])?;
+  Ok(parse_commit_blob(&blob).expect("parse commit"))
 }
 
 pub fn parse_commit_blob(data: &str) -> Option<Commit> {

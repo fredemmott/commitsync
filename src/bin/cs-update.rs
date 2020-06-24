@@ -6,12 +6,14 @@
  * in the root directory of this source tree.
  */
 
+use commitsync::*;
+
 /** Store the current ref in CommitSync.
  *
  * This is a debugging tool, not intended for regular use.
  */
-pub fn main() -> commitsync::Result<()> {
-  let (cs_ref, cs_meta_ref) = commitsync::store_commit()?;
+pub fn main() -> Result<(), CSError> {
+  let (cs_ref, cs_meta_ref) = store_commit()?;
   println!("{}\n{}", &cs_ref, cs_meta_ref);
   Ok(())
 }

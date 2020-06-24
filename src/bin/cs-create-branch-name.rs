@@ -6,7 +6,7 @@
  * in the root directory of this source tree.
  */
 
-use commitsync::branch_names::*;
+use commitsync::{branch_names::*, *};
 
 /** Print the branch name that CommitSync would generated if needed.
  *
@@ -15,7 +15,7 @@ use commitsync::branch_names::*;
  *
  * This is a debugging tool, not intended for regular use.
  */
-pub fn main() -> commitsync::Result<()> {
+pub fn main() -> Result<(), CSError> {
   println!("{}", create_branch_name()?);
   Ok(())
 }

@@ -6,13 +6,13 @@
  * in the root directory of this source tree.
  */
 
-use commitsync::git;
+use commitsync::*;
 
 /** Print the upstream of the current repository.
  *
  * This is a debugging tool, not intended for regular use.
  */
-pub fn main() -> commitsync::Result<()> {
+pub fn main() -> Result<(), CSError> {
   match git::get_upstream()? {
     Some(refname) => println!("{}", &refname),
     None => std::process::exit(1),

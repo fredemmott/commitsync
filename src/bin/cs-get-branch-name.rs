@@ -6,13 +6,13 @@
  * in the root directory of this source tree.
  */
 
-use commitsync::branch_names::*;
+use commitsync::{branch_names::*, *};
 
 /** Print the branch name that CommitSync would use to sync.
  *
  * This is a debugging tool, not intended for regular use.
  */
-pub fn main() -> commitsync::Result<()> {
+pub fn main() -> Result<(), CSError> {
   println!("{}", &get_branch_name()?);
   Ok(())
 }

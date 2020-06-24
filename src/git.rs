@@ -17,3 +17,7 @@ pub use exec::*;
 pub use get_upstream::*;
 
 pub mod raw_commit;
+
+mod error;
+pub use error::Error as GitError;
+pub use error::FailedCommandOutput;

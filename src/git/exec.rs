@@ -8,39 +8,54 @@
 
 use subprocess::{Exec, Redirection};
 
-// Specific to avoid a circular dependency
-use crate::git::dirs::cs_git_dir;
+use crate::{git::dirs::cs_git_dir, git::*};
 
-use crate::Result;
+fn trace(cmd: &str, args: &[&str]) -> () {
+  match std::env::var_os("COMMITSYNC_TRACE")
+    .unwrap_or(std::ffi::OsString::new())
+    .as_os_str()
+    .to_str()
+    .unwrap_or("")
+  {
+    "1" | "true" | "on" | "yes" => eprintln!("{}\t{:?}", cmd, args),
+    _ => (),
+  }
+}
+
+fn exec_git(cmd: subprocess::Exec) -> Result<String, GitError> {
+  let cmdline = cmd.to_cmdline_lossy();
+  let out = cmd
+    .stdout(Redirection::Pipe)
+    .stderr(Redirection::Pipe)
+    .capture()?;
+  if out.success() {
+    Ok(out.stdout_str().trim().to_string())
+  } else {
+    Err(GitError::NonZeroExit(FailedCommandOutput {
+      command: cmdline,
+      stdout: out.stdout_str().trim().to_string(),
+      stderr: out.stderr_str().trim().to_string(),
+    }))
+  }
+}
 
 /// Execute `git` in the real repository.
-pub fn git(args: &[&str]) -> Result<String> {
-  let out = Exec::cmd("git")
-    .args(args)
-    .stdout(Redirection::Pipe)
-    .stderr(Redirection::Merge)
-    .capture()?
-    .stdout_str()
-    .trim()
-    .to_string();
-  Ok(out)
+pub fn git(args: &[&str]) -> Result<String, GitError> {
+  trace("git", args);
+  let cmd = Exec::cmd("git").args(args);
+  exec_git(cmd)
 }
 
 /// Execute `git` in the CommitSync repository.
-pub fn cs_git(args: &[&str]) -> Result<String> {
+pub fn cs_git(args: &[&str]) -> Result<String, GitError> {
+  trace("cs_git", args);
   let git_dir = cs_git_dir()?;
   let mut index_file = git_dir.clone();
   index_file.push("index");
 
-  let out = Exec::cmd("git")
+  let cmd = Exec::cmd("git")
     .args(args)
-    .stdout(Redirection::Pipe)
-    .stderr(Redirection::Merge)
     .env("GIT_DIR", &git_dir)
-    .env("GIT_INDEX_FILE", &index_file)
-    .capture()?
-    .stdout_str()
-    .trim()
-    .to_string();
-  Ok(out)
+    .env("GIT_INDEX_FILE", &index_file);
+  exec_git(cmd)
 }

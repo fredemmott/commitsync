@@ -6,14 +6,14 @@
  * in the root directory of this source tree.
  */
 
-use crate::{git::git, Result};
+use crate::git::*;
 
 /** Find the upstream for the current branch.
  *
  * This will walk backwards through the commit history until it finds a commit
  * that is the head of a remote branch.
  */
-pub fn get_upstream() -> Result<Option<String>> {
+pub fn get_upstream() -> Result<Option<String>, GitError> {
   let raw_refs = git(&[
     "for-each-ref",
     "--format=%(objectname) %(refname)",
