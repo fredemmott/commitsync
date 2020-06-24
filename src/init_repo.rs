@@ -39,13 +39,35 @@ fn add_alias() -> Result<()> {
     return Ok(());
   }
 
-  println!("{}", "Where would like `git cs` to work?".bold());
+  println!("Where would like `git cs` to work?");
   println!(" - {}: on the system", "global".green());
   println!("   - useful if you want to use CommitSync with multiple repos");
   println!("   - useful if you use containers (e.g. WSL, Docker)");
   println!(" - {}: just this repo", "local".green());
-  // INCOMPLETE
-  Ok(())
+  print!("\n{} [global] {} ", "Your choice?".bold(), ">".bold());
+
+  let mut buf = String::new();
+  let exe = std::env::current_exe()
+    .expect("should have a current exe")
+    .into_os_string()
+    .into_string()
+    .expect("Invalid UTF8");
+  loop {
+    std::io::stdin()
+      .read_line(&mut buf)
+      .expect("Failed to read a line?");
+    match buf.as_ref() {
+      "" | "global" => {
+        git(&["config", "--global", "alias.cs", &exe])?;
+        return Ok(());
+      }
+      "local" => {
+        git(&["config", "alias.cs", &exe])?;
+        return Ok(());
+      }
+      _ => eprintln!("Enter 'local' or 'global'"),
+    }
+  }
 }
 
 pub fn init_repo() -> Result<()> {
