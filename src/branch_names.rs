@@ -15,7 +15,8 @@ pub fn create_branch_name() -> Result<String, GitError> {
   let remote_shorthash = git::git(&["rev-parse", "--short", &remote_ref])?;
 
   let head_shorthash = git::git(&["rev-parse", "--short", "HEAD"])?;
-  let head_info = git::get_real_commit(&head_shorthash).expect("couldnt read HEAD");
+  let head_info =
+    git::get_real_commit(&head_shorthash).expect("couldnt read HEAD");
   let head_date = head_info.committed_at.format("%Y-%m-%d");
 
   Ok(format!(
