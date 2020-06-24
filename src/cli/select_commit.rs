@@ -55,7 +55,12 @@ pub fn select_commit() -> Result<(), CSError> {
     .iter()
     .map(|s| s.to_string())
     .collect();
-  args.push(format!("--format={}%D{}%h %s", &start_tag, &end_tag));
+  args.push(format!(
+    "--format={}\n{}%D{}\nAuthor: %aN <%aE>\nDate:   %aD\n\n%s\n",
+    "commit %H".yellow(),
+    &start_tag,
+    &end_tag
+  ));
   for (_, meta) in &metas {
     args.push(format!("{}..{}", &meta.upstream_sha, &meta.commit_sha))
   }
@@ -68,11 +73,6 @@ pub fn select_commit() -> Result<(), CSError> {
       Some(end_tag_pos) => {
         let start_tag_pos = line.find(start_tag).expect("a start tag");
         if end_tag_pos == start_tag_pos + start_tag.len() {
-          println!(
-            "{}{}",
-            &line[..start_tag_pos],
-            &line[end_tag_pos + end_tag.len()..]
-          );
           continue;
         }
 
@@ -84,23 +84,34 @@ pub fn select_commit() -> Result<(), CSError> {
             } else {
               ref_name.split("/cs-").last().unwrap()
             }
-          });
+          })
+          .unique();
+        let prefix = &line[..start_tag_pos];
+        let prefix = match &prefix.rfind("/") {
+          None => prefix.to_string(),
+          Some(idx) => format!("{} {}", &prefix[0..*idx], &prefix[idx + 1..]),
+        };
+        let mut first: bool = true;
         for key in keys {
           let meta = &metas[key];
           println!(
-            "{}{}@{} by {} at {}",
-            &line[..start_tag_pos],
-            &meta.commit_ref.split("/").last().unwrap().green().bold(),
-            &meta.hostname.split(".").nth(0).unwrap().cyan(),
+            "{}Branch: {}@{}/{}",
+            if first {
+              &line[..start_tag_pos]
+            } else {
+              &prefix
+            },
             &meta.user,
-            &meta.meta_committed_at.expect("commited meta ref").format("%Y-%m-%d %x").to_string().yellow(),
+            &meta.hostname.split(".").nth(0).unwrap().cyan(),
+            &meta
+              .commit_ref
+              .split("/")
+              .last()
+              .expect("a valid ref")
+              .green(),
           );
+          first = false;
         }
-        println!(
-          "{}  {}",
-          &line[..line.find('*').unwrap_or(start_tag_pos - 2)],
-          &line[end_tag_pos + end_tag.len()..]
-        );
       }
     }
   }
