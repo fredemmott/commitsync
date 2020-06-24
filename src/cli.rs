@@ -8,3 +8,6 @@
 
 mod init_repo;
 pub use init_repo::*;
+
+mod select_commit;
+pub use select_commit::*;

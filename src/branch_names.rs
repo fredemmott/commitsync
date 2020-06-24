@@ -28,8 +28,8 @@ pub fn create_branch_name() -> Result<String, GitError> {
 fn get_original_cs_branch_name_for_cs_ref(
   cs_refname: &str,
 ) -> Result<String, GitError> {
-  let branch = cs_refname.split("/").last().expect("bad ref format");
-  let meta_ref = format!("refs/heads/csmeta-{}", branch);
+  let branch_suffix = cs_refname.split("/cs-").last().expect("bad ref format");
+  let meta_ref = format!("refs/heads/csmeta-{}", &branch_suffix);
 
   Ok(
     git::cs_git(&["cat-file", "blob", &format!("{}:commit.ref", meta_ref)])?
@@ -85,5 +85,5 @@ pub fn get_branch_name() -> Result<String, GitError> {
 
 pub fn get_meta_branch_name() -> Result<String, GitError> {
   let cs_branch = get_branch_name()?;
-  Ok(format!("ccmeta-{}", &cs_branch[3..]))
+  Ok(format!("csmeta-{}", &cs_branch[3..]))
 }
