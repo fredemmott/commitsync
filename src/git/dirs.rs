@@ -11,10 +11,19 @@ use std::path::{Path, PathBuf};
 // Specific to avoid a circular dependency
 use crate::git::exec::git;
 
+static mut CACHED_GIT_DIR: Option<PathBuf> = None;
+
 /// Get the `GIT_DIR` of the real repository
 pub fn real_git_dir() -> Result<PathBuf, crate::GitError> {
-  let raw = git(&["rev-parse", "--absolute-git-dir"])?;
-  Ok(Path::new(&raw).to_path_buf())
+  match unsafe { &CACHED_GIT_DIR } {
+    Some(dir) => Ok(dir.to_path_buf()),
+    None => {
+      let path = git(&["rev-parse", "--absolute-git-dir"])?;
+      let buf = Path::new(&path).to_path_buf();
+      unsafe { CACHED_GIT_DIR = Some(buf.to_path_buf()) };
+      Ok(buf)
+    }
+  }
 }
 
 /// Get the `GIT_DIR` of the CommitSync repository
