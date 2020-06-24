@@ -7,14 +7,12 @@
  */
 
 pub mod branch_names;
+pub mod cli;
 pub mod git;
-
 pub use git::GitError;
 
 mod store_commit;
 pub use store_commit::store_commit;
-mod init_repo;
-pub use init_repo::init_repo;
 mod meta_branch_info;
 pub use meta_branch_info::*;
 

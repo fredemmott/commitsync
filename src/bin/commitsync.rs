@@ -32,7 +32,7 @@ struct Cli {
 fn run(command: &Command, _cli: &Cli) -> () {
   match command {
     Command::Init => {
-      commitsync::init_repo().unwrap();
+      commitsync::cli::init_repo().unwrap();
     }
     Command::PostCommit => {
       commitsync::store_commit().unwrap();
