@@ -45,8 +45,6 @@ fn add_alias() -> Result<(), CSError> {
   println!("   - useful if you use containers (e.g. WSL, Docker)");
   println!("   - allows `git cs init` in other repositories");
   println!(" - {}: just this repository", "local".green());
-  print!("{} [global] {} ", "Your choice?".bold(), ">".bold());
-  let _ = std::io::stdout().flush();
 
   let mut buf = String::new();
   let exe = std::env::current_exe()
@@ -57,6 +55,9 @@ fn add_alias() -> Result<(), CSError> {
     .replace("\\", "/");
   let alias = format!("!{}", exe);
   loop {
+    print!("{} [global] {} ", "Your choice?".bold(), ">".bold());
+    let _ = std::io::stdout().flush();
+
     std::io::stdin()
       .read_line(&mut buf)
       .expect("Failed to read a line?");
