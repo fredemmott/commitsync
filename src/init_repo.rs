@@ -40,11 +40,13 @@ fn add_alias() -> Result<()> {
   }
 
   println!("Where would like `git cs` to work?");
-  println!(" - {}: on the system", "global".green());
+  println!(" - {}: every repository", "global".green());
   println!("   - useful if you want to use CommitSync with multiple repos");
   println!("   - useful if you use containers (e.g. WSL, Docker)");
-  println!(" - {}: just this repo", "local".green());
-  print!("\n{} [global] {} ", "Your choice?".bold(), ">".bold());
+  println!("   - allows `git cs init` in other repositories");
+  println!(" - {}: just this repository", "local".green());
+  print!("{} [global] {} ", "Your choice?".bold(), ">".bold());
+  let _ = std::io::stdout().flush();
 
   let mut buf = String::new();
   let exe = std::env::current_exe()
@@ -52,22 +54,84 @@ fn add_alias() -> Result<()> {
     .into_os_string()
     .into_string()
     .expect("Invalid UTF8");
+    let alias = format!("!{}", exe);
   loop {
     std::io::stdin()
       .read_line(&mut buf)
       .expect("Failed to read a line?");
-    match buf.as_ref() {
+    match &buf.trim()[..] {
       "" | "global" => {
-        git(&["config", "--global", "alias.cs", &exe])?;
+        git(&["config", "--global", "alias.cs", &alias])?;
         return Ok(());
-      }
+      },
       "local" => {
-        git(&["config", "alias.cs", &exe])?;
+        git(&["config", "alias.cs", &alias])?;
         return Ok(());
-      }
-      _ => eprintln!("Enter 'local' or 'global'"),
+      },
+      _ => eprintln!("Enter 'local' or 'global'")
     }
   }
+}
+
+fn configure_remote() -> Result<()> {
+  println!(
+    "Where should CommitSync push?
+
+All branches will be public; you probably don't want this to be your
+main upstream repository.
+
+Example: git@example.com:commitsync/myrepo.git"
+  );
+  let _ = std::io::stdout().flush();
+
+  let mut url = String::new();
+  loop {
+    print!("{} ", "Remote URL>".bold());
+    std::io::stdout().flush().unwrap();
+    std::io::stdin()
+      .read_line(&mut url)
+      .expect("Failed to read a line?");
+    match &url.trim()[..] {
+        "" => (),
+        _ => break,
+    }
+};
+    cs_git(&["remote", "add", "commitsync", &url])?;
+    Ok(())
+}
+
+fn fetch_data() -> Result<()> {
+    println!("Fetching remote CommitSync data...");
+    cs_git(&["fetch"])?;
+    println!("...done!");
+    Ok(())
+}
+
+use std::os::unix::fs::PermissionsExt;
+
+fn setup_hook() -> Result<()> {
+  let line = "git cs post-commit";
+  let mut path = real_git_dir()?;
+  path.push("hooks");
+  path.push("post-commit");
+  if path.exists() {
+      let content = std::fs::read_to_string(&path).unwrap();
+      if !content.contains(line) {
+        println!(
+          "{}\nTo finish installation, add '{}' to {}",
+          "INSTALLING THE HOOK".bold(),
+          &line,
+          &path.into_os_string().into_string().expect("Invalid UTF8 path"),
+        )
+      }
+      return Ok(());
+  }
+
+  std::fs::write(&path, &format!("#!/bin/sh\n{}\n", &line)).expect("Failed to write hook");
+  let mut perms = std::fs::metadata(path).expect("retrieving permissions").permissions();
+  perms.set_mode(0o755);
+
+  Ok(())
 }
 
 pub fn init_repo() -> Result<()> {
@@ -79,6 +143,11 @@ pub fn init_repo() -> Result<()> {
   }
   create_repo()?;
   add_alias()?;
+  configure_remote()?;
+  fetch_data()?;
+  setup_hook()?;
+
+  println!("{} Run `git cs` to access CommitSync.", "All done!".bold());
 
   Ok(())
 }
