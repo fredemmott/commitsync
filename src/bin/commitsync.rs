@@ -6,10 +6,6 @@
  * in the root directory of this source tree.
  */
 
-pub mod branch_names;
-pub mod git;
-
-mod init_repo;
-mod store_commit;
-pub use store_commit::store_commit;
-pub use init_repo::init_repo;
+fn main() -> () {
+  commitsync::init_repo().unwrap()
+}
