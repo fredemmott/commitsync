@@ -81,7 +81,7 @@ pub fn store_commit() -> Result<(String, String), GitError> {
   cs_git(&["update-ref", &cs_meta_ref, &cs_meta_sha])?;
   cs_git(&["update-ref", &cs_ref, &cs_sha])?;
 
-  let _ignore_failure = cs_git(&["push", "commitcloud", &cs_ref, &cs_meta_ref]);
+  let _ignore_failure = cs_git(&["push", "commitsync", &cs_ref, &cs_meta_ref]);
 
   Ok((cs_ref, cs_meta_ref))
 }
