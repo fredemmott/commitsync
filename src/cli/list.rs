@@ -68,12 +68,18 @@ pub fn list() -> Result<(), CSError> {
   let log = cs_git(&args)?;
   let metas: std::collections::HashMap<_, _> = metas.into_iter().collect();
 
-  for line in log.lines() {
+  let mut lines = log.lines();
+  while let Some(line) = lines.next() {
     match line.find(end_tag) {
       None => println!("{}", line),
       Some(end_tag_pos) => {
         let start_tag_pos = line.find(start_tag).expect("a start tag");
         if end_tag_pos == start_tag_pos + start_tag.len() {
+          // Keep any drawing characters: if this is the first commit in a
+          // branch, there's a `|/ ` that we want to preserve
+          let next = lines.next().expect("Expecting an author line");
+          let prefix = &line[..start_tag_pos];
+          println!("{}{}\r{}", &prefix, &next[start_tag_pos..], &prefix);
           continue;
         }
 
