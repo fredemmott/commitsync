@@ -10,25 +10,34 @@ use crate::git::dirs::*;
 use crate::git::*;
 use crate::*;
 use colored::*;
-use std::fs::File;
 use std::io::prelude::*;
+use std::path::*;
 
 fn create_repo() -> Result<(), CSError> {
   println!("Creating local repo...");
-  let git_dir = real_git_dir()?.into_os_string().into_string().unwrap();
-  let cs_git_dir = cs_git_dir()?.into_os_string().into_string().unwrap();
-  git(&["init", "--bare", &cs_git_dir])?;
+  let alternates = Path::new("objects/info/alternates");
 
-  let mut file =
-    File::create(&format!("{}/objects/info/alternates", &cs_git_dir)).unwrap();
-  file
-    .write_all(&format!("{}/objects", &git_dir).into_bytes())
-    .unwrap();
-  let mut file =
-    File::create(&format!("{}/objects/info/alternates", &git_dir)).unwrap();
-  file
-    .write_all(&format!("{}/objects", &cs_git_dir).into_bytes())
-    .unwrap();
+  git(&[
+    "init",
+    "--bare",
+    &cs_git_dir()?
+      .into_os_string()
+      .into_string()
+      .expect("valid utf8"),
+  ])?;
+
+  // Paths are relative to the 'objects' dir
+
+  std::fs::write(
+    &cs_git_dir()?.join(&alternates),
+    "../../objects".as_bytes(),
+  )
+  .unwrap();
+  std::fs::write(
+    &real_git_dir()?.join(&alternates),
+    "../CommitSync/objects".as_bytes(),
+  )
+  .unwrap();
 
   Ok(())
 }
