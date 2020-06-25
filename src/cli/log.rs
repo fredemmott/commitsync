@@ -10,6 +10,7 @@ use crate::{git::*, *};
 use colored::*;
 use itertools::Itertools;
 use std::collections::HashMap;
+use std::str::FromStr;
 
 mod printer;
 pub use printer::Printer;
@@ -17,28 +18,48 @@ pub use printer::Printer;
 mod graph_printer;
 pub use graph_printer::GraphPrinter;
 
-pub struct Options {
-  pub fetch: bool,
-  pub printer: Option<Box<dyn Printer>>,
+pub enum Format {
+  Short,
+  Oneline,
 }
 
-pub fn log(options: Options) -> Result<(), CSError> {
-  let printer_box = match options.printer {
-    Some(printer) => printer,
-    None => match git(&["config", "commitsync.format"])
-      .unwrap_or(String::new())
-      .as_ref()
-    {
-      "oneline" => GraphPrinter::oneline(),
-      "short" | "" => GraphPrinter::short(),
-      value => {
-        return Err(CSError::UserError(format!(
-          "Configuration option 'commitsync.format={}' is invalid",
-          value
-        )))
-      }
+impl FromStr for Format {
+  type Err = String;
+  fn from_str(data: &str) -> Result<Format, Self::Err> {
+    match data {
+      "oneline" => Ok(Format::Oneline),
+      "short" => Ok(Format::Short),
+      _ => Err("Invalid format".to_string()),
+    }
+  }
+}
+
+pub struct Options<'a> {
+  pub fetch: bool,
+  pub format: &'a Option<Format>,
+}
+
+fn printer_from_format(
+  format: &Option<Format>,
+) -> Result<Box<dyn Printer>, CSError> {
+  match format {
+    Some(Format::Oneline) => Ok(GraphPrinter::oneline()),
+    Some(Format::Short) => Ok(GraphPrinter::short()),
+    None => match git(&["config", "commitsync.format"]) {
+      Err(_) => Ok(GraphPrinter::short()),
+      Ok(s) => match Format::from_str(&s) {
+        Err(_) => Err(CSError::UserError(format!(
+          "Bad config option commitsync.format={}",
+          &s,
+        ))),
+        Ok(f) => printer_from_format(&Some(f)),
+      },
     },
-  };
+  }
+}
+
+pub fn log(options: &Options) -> Result<(), CSError> {
+  let printer_box = printer_from_format(&options.format)?;
   let printer = &*printer_box;
 
   if options.fetch {

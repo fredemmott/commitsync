@@ -35,9 +35,7 @@ struct Cli {
   #[structopt(long)]
   local: bool,
   #[structopt(long)]
-  short: bool,
-  #[structopt(long)]
-  oneline: bool,
+  format: Option<cli::log::Format>,
 }
 
 fn run(command: &Command, cli: &Cli) -> () {
@@ -49,13 +47,9 @@ fn run(command: &Command, cli: &Cli) -> () {
       commitsync::store_commit().unwrap();
     }
     Command::Log => {
-      cli::log(cli::log::Options {
+      cli::log(&cli::log::Options {
         fetch: !cli.local,
-        printer: match cli {
-          Cli { oneline: true, .. } => Some(cli::log::GraphPrinter::oneline()),
-          Cli { short: true, .. } => Some(cli::log::GraphPrinter::short()),
-          _ => None,
-        },
+        format: &cli.format,
       })
       .unwrap();
     }
