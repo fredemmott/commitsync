@@ -9,5 +9,5 @@
 mod init_repo;
 pub use init_repo::*;
 
-pub mod list;
-pub use list::list;
+pub mod log;
+pub use log::log;

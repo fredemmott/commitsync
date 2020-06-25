@@ -6,7 +6,7 @@
  * in the root directory of this source tree.
  */
 
-use crate::{cli::list::Printer, git::*, *};
+use crate::{cli::log::Printer, git::*, *};
 use colored::*;
 use itertools::Itertools;
 use std::collections::HashMap;

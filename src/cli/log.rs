@@ -22,7 +22,7 @@ pub struct Options {
   pub printer: Option<Box<dyn Printer>>,
 }
 
-pub fn list(options: Options) -> Result<(), CSError> {
+pub fn log(options: Options) -> Result<(), CSError> {
   let printer_box = match options.printer {
     Some(printer) => printer,
     None => match git(&["config", "commitsync.format"])
