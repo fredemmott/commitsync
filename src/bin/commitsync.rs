@@ -7,6 +7,7 @@
  */
 
 use colored::*;
+use commitsync::cli;
 use std::io::prelude::*;
 use structopt::StructOpt;
 
@@ -31,18 +32,32 @@ impl std::str::FromStr for Command {
 #[derive(StructOpt)]
 struct Cli {
   command: Option<Command>,
+  #[structopt(long)]
+  local: bool,
+  #[structopt(long)]
+  short: bool,
+  #[structopt(long)]
+  oneline: bool,
 }
 
-fn run(command: &Command, _cli: &Cli) -> () {
+fn run(command: &Command, cli: &Cli) -> () {
   match command {
     Command::Init => {
-      commitsync::cli::init_repo().unwrap();
+      cli::init_repo().unwrap();
     }
     Command::PostCommit => {
       commitsync::store_commit().unwrap();
     }
     Command::List => {
-      commitsync::cli::list().unwrap();
+      cli::list(cli::list::Options {
+        fetch: !cli.local,
+        printer: match cli {
+          Cli { oneline: true, .. } => Some(cli::list::GraphPrinter::oneline()),
+          Cli { short: true, .. } => Some(cli::list::GraphPrinter::short()),
+          _ => None,
+        },
+      })
+      .unwrap();
     }
   }
 }

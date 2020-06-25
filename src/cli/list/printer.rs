@@ -5,9 +5,10 @@
  * This source code is licensed under the ISC license found in the LICENSE file
  * in the root directory of this source tree.
  */
+use crate::*;
+use std::collections::HashMap;
 
-mod init_repo;
-pub use init_repo::*;
-
-pub mod list;
-pub use list::list;
+pub trait Printer {
+  fn progress(&self, message: &str) -> ();
+  fn print_metas(&self, metas: &HashMap<String, BranchMetadata>) -> Result<(), CSError>;
+}

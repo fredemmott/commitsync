@@ -9,21 +9,41 @@
 use crate::{git::*, *};
 use colored::*;
 use itertools::Itertools;
-use std::io::prelude::*;
+use std::collections::HashMap;
 
-fn fetch() -> () {
-  print!("Fetching...");
-  let _ = std::io::stdout().flush();
-  match cs_git(&["fetch", "commitsync"]) {
-    Ok(_) => (),
-    Err(_) => eprintln!("  {}", "Fetching failed, showing stale data".red()),
-  }
-  print!("\r");
-  let _ = std::io::stdout().flush();
+mod printer;
+pub use printer::Printer;
+
+mod graph_printer;
+pub use graph_printer::GraphPrinter;
+
+pub struct Options {
+  pub fetch: bool,
+  pub printer: Option<Box<dyn Printer>>,
 }
 
-pub fn list() -> Result<(), CSError> {
-  fetch();
+pub fn list(options: Options) -> Result<(), CSError> {
+  let printer_box = match options.printer {
+    Some(printer) => printer,
+    None => match git(&["config", "commitsync.format"])
+      .unwrap_or(String::new())
+      .as_ref()
+    {
+      "oneline" => GraphPrinter::oneline(),
+      "short" | "" => GraphPrinter::short(),
+      value => {
+        return Err(CSError::UserError(format!(
+          "Configuration option 'commitsync.format={}' is invalid",
+          value
+        )))
+      }
+    },
+  };
+  let printer = &*printer_box;
+
+  if options.fetch {
+    fetch(printer);
+  }
 
   let refs = cs_git(&[
     "for-each-ref",
@@ -42,7 +62,7 @@ pub fn list() -> Result<(), CSError> {
     return Ok(());
   }
 
-  let metas: Vec<(String, BranchMetadata)> = refs
+  let metas = refs
     .split("\n")
     .map(|name| {
       (
@@ -51,76 +71,16 @@ pub fn list() -> Result<(), CSError> {
       )
     })
     .unique_by(|(_name, meta)| meta.commit_sha.to_string())
-    .collect();
+    .collect::<HashMap<String, BranchMetadata>>();
 
-  let start_tag = "<<<CS_REFS(";
-  let end_tag = ")CS_REFS>>>";
-  let mut args: Vec<String> = vec!["log".to_string(), "--graph".to_string()];
-  args.push(format!(
-    "--format={}\n{}%D{}\nAuthor: %aN <%aE>\nDate:   %aD\n\n%s\n",
-    "commit %H".yellow(),
-    &start_tag,
-    &end_tag
-  ));
-  for (_, meta) in &metas {
-    args.push(format!("{}..{}", &meta.upstream_sha, &meta.commit_sha))
+  printer.print_metas(&metas)
+}
+
+fn fetch(printer: &dyn Printer) -> () {
+  printer.progress("Fetching...");
+  match cs_git(&["fetch", "commitsync"]) {
+    Ok(_) => (),
+    Err(_) => eprintln!("  {}", "Fetching failed, showing stale data".red()),
   }
-  let log = cs_git(&args)?;
-  let metas: std::collections::HashMap<_, _> = metas.into_iter().collect();
-
-  let mut lines = log.lines();
-  while let Some(line) = lines.next() {
-    match line.find(end_tag) {
-      None => println!("{}", line),
-      Some(end_tag_pos) => {
-        let start_tag_pos = line.find(start_tag).expect("a start tag");
-        if end_tag_pos == start_tag_pos + start_tag.len() {
-          // Keep any drawing characters: if this is the first commit in a
-          // branch, there's a `|/ ` that we want to preserve
-          let next = lines.next().expect("Expecting an author line");
-          let prefix = &line[..start_tag_pos];
-          println!("{}{}\r{}", &prefix, &next[start_tag_pos..], &prefix);
-          continue;
-        }
-
-        let keys = line[(start_tag_pos + start_tag.len())..end_tag_pos]
-          .split(", ")
-          .map(|ref_name| {
-            if &ref_name[0..3] == "cs-" {
-              &ref_name[3..]
-            } else {
-              ref_name.split("/cs-").last().unwrap()
-            }
-          })
-          .unique();
-        let prefix = &line[..start_tag_pos];
-        let prefix = match &prefix.rfind("/") {
-          None => prefix.to_string(),
-          Some(idx) => format!("{} {}", &prefix[0..*idx], &prefix[idx + 1..]),
-        };
-        let mut first: bool = true;
-        for key in keys {
-          let meta = &metas[key];
-          println!(
-            "{}Branch: {}@{}/{}",
-            if first {
-              &line[..start_tag_pos]
-            } else {
-              &prefix
-            },
-            &meta.user,
-            &meta.hostname.split(".").nth(0).unwrap().cyan(),
-            &meta
-              .commit_ref
-              .split("/")
-              .last()
-              .expect("a valid ref")
-              .green(),
-          );
-          first = false;
-        }
-      }
-    }
-  }
-  Ok(())
+  printer.progress("\r");
 }
