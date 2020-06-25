@@ -22,7 +22,7 @@ fn fetch() -> () {
   let _ = std::io::stdout().flush();
 }
 
-pub fn select_commit() -> Result<(), CSError> {
+pub fn list() -> Result<(), CSError> {
   fetch();
 
   let refs = cs_git(&[

@@ -13,7 +13,7 @@ use structopt::StructOpt;
 enum Command {
   Init,
   PostCommit,
-  Select,
+  List,
 }
 
 impl std::str::FromStr for Command {
@@ -22,7 +22,7 @@ impl std::str::FromStr for Command {
     match data {
       "init" => Ok(Command::Init),
       "post-commit" => Ok(Command::PostCommit),
-      "select" => Ok(Command::Select),
+      "list" => Ok(Command::List),
       _ => Err("Invalid command".to_string()),
     }
   }
@@ -41,8 +41,8 @@ fn run(command: &Command, _cli: &Cli) -> () {
     Command::PostCommit => {
       commitsync::store_commit().unwrap();
     }
-    Command::Select => {
-      commitsync::cli::select_commit().unwrap();
+    Command::List => {
+      commitsync::cli::list().unwrap();
     }
   }
 }
@@ -54,7 +54,7 @@ fn main() -> () {
     None => {
       let dir = commitsync::git::dirs::cs_git_dir().unwrap();
       if dir.exists() {
-        run(&Command::Select, &cli)
+        run(&Command::List, &cli)
       } else {
         print!(
           "{}",
