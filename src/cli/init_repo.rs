@@ -128,27 +128,27 @@ fn make_executable(_path: &std::path::PathBuf) -> () {
 }
 
 fn setup_hook() -> Result<(), CSError> {
-  let line = "git cs post-commit";
+  let call = "git cs post-commit &\ndisown $!\n";
   let mut path = real_git_dir()?;
   path.push("hooks");
   path.push("post-commit");
   if path.exists() {
     let content = std::fs::read_to_string(&path).unwrap();
-    if !content.contains(line) {
+    if !content.contains(call) {
       println!(
-        "{}\nTo finish installation, add '{}' to {}",
+        "{}\nTo finish installation, add this to {}: {}",
         "INSTALLING THE HOOK".bold(),
-        &line,
         &path
           .into_os_string()
           .into_string()
           .expect("Invalid UTF8 path"),
+        &call,
       )
     }
     return Ok(());
   }
 
-  std::fs::write(&path, &format!("#!/bin/sh\n{}\n", &line))
+  std::fs::write(&path, &format!("#!/bin/sh\n{}", &call))
     .expect("Failed to write hook");
   make_executable(&path);
   Ok(())
