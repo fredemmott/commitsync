@@ -74,7 +74,7 @@ fred@Freds-MBP testrepo % git cs --format=oneline
 fred@Freds-MBP testrepo % git checkout -b foo-from-win a9b49f9 
 Switched to a new branch 'foo-from-win' 
 fred@Freds-MBP testrepo % git log -1 
-commit a9b49f93905a9fb68495f307b1c6232078f1e24f (HEAD -> foo-from-win, mybranch, fromother-pc) 
+commit a9b49f93905a9fb68495f307b1c6232078f1e24f (HEAD -> foo-from-win)
 Author: Fred Emmott <fred@fredemmott.com> 
 Date:   Thu Jun 25 17:55:02 2020 -0700 
  
