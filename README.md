@@ -25,6 +25,13 @@ can also be useful as part of a backup solution.
 
 ## Example
 
+With colors:
+
+![long-form output](long-form.png)
+![--oneline and checkout](short-form-checkout.png)
+
+Or, plain text:
+
 ```
 fred@Freds-MBP testrepo % git cs 
 * a8e0545594f2d550079baba46fb0bb914625cf6d 
